@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.10">
+<title>容器技术</title>
+<link rel="stylesheet" href="css/site.css">
+<script src="js/setup.js"></script><script defer src="js/site.js"></script>
+
+</head>
+<body id="docker" class="book toc2 toc-left"><div id="banner-container" class="container" role="banner">
+  <div id="banner" class="contained" role="banner">
+    <div id="switch-theme">
+      <input type="checkbox" id="switch-theme-checkbox" />
+      <label for="switch-theme-checkbox">Dark Theme</label>
+    </div>
+  </div>
+</div>
+<div id="tocbar-container" class="container" role="navigation">
+  <div id="tocbar" class="contained" role="navigation">
+    <button id="toggle-toc"></button>
+  </div>
+</div>
+<div id="main-container" class="container">
+  <div id="main" class="contained">
+    <div id="doc" class="doc">
+<div id="header">
+<h1>容器技术</h1>
+<div class="details">
+<span id="revnumber"> 0.0.1-SNAPSHOT</span>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<span id="back-to-index"><a href="../index.html">Back to index</a></span><ul class="sectlevel1">
+<li><a href="#java-locale">1. java 默认locale与编码问题</a>
+<ul class="sectlevel2">
+<li><a href="#影响locale文件编码的jvm属性">1.1. 影响locale，文件编码的jvm属性</a></li>
+<li><a href="#macos">1.2. macos</a></li>
+<li><a href="#debianubuntu">1.3. Debian/Ubuntu</a></li>
+<li><a href="#centos7">1.4. Centos7</a></li>
+<li><a href="#网上流言">1.5. 网上流言</a></li>
+<li><a href="#容器内java编码问题排查方法">1.6. 容器内java编码问题排查方法</a>
+<ul class="sectlevel3">
+<li><a href="#普通java应用">1.6.1. 普通java应用</a></li>
+<li><a href="#maven">1.6.2. maven</a></li>
+</ul>
+</li>
+<li><a href="#默认locale的作用">1.7. 默认locale的作用</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="java-locale"><a class="anchor" href="#java-locale"></a>1. java 默认locale与编码问题</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>java编码问题其实分为很多种，比如jvm默认locale设置，默认文件编码方式设置，日志编码设置，源文件编码设置，本文档持续更新所有的编码相关问题</p>
+</div>
+<div class="sect2">
+<h3 id="影响locale文件编码的jvm属性"><a class="anchor" href="#影响locale文件编码的jvm属性"></a>1.1. 影响locale，文件编码的jvm属性</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>user.language</p>
+</li>
+<li>
+<p>user.country</p>
+</li>
+<li>
+<p>user.variant</p>
+<div class="paragraph">
+<p>这个我们一般不关心</p>
+</div>
+</li>
+<li>
+<p>file.encoding</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>这几个属性，首先jvm会通过复杂的逻辑进行初始化，这部分c代码详见openjdk：System.c，java_props_md.c，java_props_macosx.c，该部分逻辑，在不同的平台会有不同，绝不是仅仅通过LANG，LC_ALL，LC_*，LANGUAGE环境变量决定的，由于逻辑较为复杂，而我的clion过期了，因此我也没有debug详细跟踪一下。</p>
+</div>
+<div class="paragraph">
+<p>如果不想受系统环境影响，或者不想探究其影响逻辑的话，可以直接在jvm参数中指定上述属性的值，从而在初始化逻辑中覆盖之前得到的值。这其实是最简单高效的方法。</p>
+</div>
+<div class="paragraph">
+<p>从这里我们需要认清一点，环境变量是否能够影响程序的locale，完全取决于程序本身有没有读取这几个变量，并按照该变量设置locale，在jvm的实现中，不只是考虑了这些变量的，还有和平台相关的代码。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="macos"><a class="anchor" href="#macos"></a>1.2. macos</h3>
+<div class="paragraph">
+<p>根据首选语言和地区，user.language=zh，user.country=CN，文件编码通过什么影响的我没有找到</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../images/image-20211217182748500.png" alt="image-20211217182748500"></span></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Debian/Ubuntu</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="debianubuntu"><a class="anchor" href="#debianubuntu"></a>1.3. Debian/Ubuntu</h3>
+<div class="paragraph">
+<p>Debian/Ubuntu容器环境下，如果在dockerfile中指定下述命令</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-dockerfile" data-lang="dockerfile">  # Debian 先安装locales
+  RUN apt-get update
+  RUN apt-get -y install locales
+
+
+  RUN sed -i '/zh_CN.UTF-8/s/^# //g' /etc/locale.gen &amp;&amp; \
+      locale-gen
+  ENV LC_ALL zh_CN.UTF-8</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>运行java应用测试，得到下述结果，上述命令确实可以完全影响到我们需要的几个属性，但要注意的是，zh_CN.UTF-8这个值必须是locale支持的，不然会得到意想不到的结果，可以查看/etc/locale.gen文件得到支持的值(这个文件中的值是否齐全我不清楚，也没有去搜索相关文档)。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">System.out.println("user.language=" + System.getProperty("user.language"));
+System.out.println("user.country=" + System.getProperty("user.country"));
+System.out.println("file.encoding=" + System.getProperty("file.encoding"));
+System.out.println("default locale=" + Locale.getDefault());
+</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-text" data-lang="text">user.language=zh
+user.country=CN
+file.encoding=UTF-8
+default locale=zh_CN</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="centos7"><a class="anchor" href="#centos7"></a>1.4. Centos7</h3>
+<div class="paragraph">
+<p>Centos7容器环境下，则需要在dockerfile中指定下述命令</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-dockerfile" data-lang="dockerfile">RUN localedef -c -f EUC-TW -i zh_TW zh_TW.EUC-TW
+ENV LC_ALL zh_TW.EUC-TW</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-text" data-lang="text">user.language=zh
+user.country=TW
+file.encoding=EUC-TW
+default locale=zh_TW</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="网上流言"><a class="anchor" href="#网上流言"></a>1.5. 网上流言</h3>
+<div class="paragraph">
+<p>网上多数的流言大概理论如下(比如 <a href="https://jarirajari.wordpress.com/2020/11/23/how-to-set-locale-in-linux-for-jvm/">这篇博客</a>)，但实际上这些环境变量对jvm的影响是有限的，使用这些环境变量往往得不到预期的结果</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If the JVM setting <code>user.language</code> is set, use it and look no further</p>
+</li>
+<li>
+<p>If user language is not set, scan the environment for <code>LC_ALL</code></p>
+</li>
+<li>
+<p>If <code>LC_ALL</code> does not exist, scan the environment for <code>LANG</code></p>
+</li>
+<li>
+<p>If <code>LANG</code> is not set, default to <code>en_US</code> locale</p>
+</li>
+</ol>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>以上述文章为例，其列举了环境变量的优先级，但这和java应用的实际运行情况显然是不匹配的。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="容器内java编码问题排查方法"><a class="anchor" href="#容器内java编码问题排查方法"></a>1.6. 容器内java编码问题排查方法</h3>
+<div class="sect3">
+<h4 id="普通java应用"><a class="anchor" href="#普通java应用"></a>1.6.1. 普通java应用</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>对于运行时的java应用，下载arthas，查看系统属性，看看值是否符合预期，这是最根本的方式。</p>
+</li>
+<li>
+<p>查看环境变量，由于环境变量不可以完全反映出jvm的默认locale和编码，因此作为只能作为一个辅助查询的手段，如果环境变量没有问题，仍然要通过jvm系统属性排查</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="maven"><a class="anchor" href="#maven"></a>1.6.2. maven</h4>
+<div class="paragraph">
+<p>maven也是基于java的应用，因此在构建过程中如果出现编码问题，也可以通过这个方法来排查，当然maven本身的编码相关的选项也是要考虑的</p>
+</div>
+<div class="paragraph">
+<p>输入mvn -v</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-text" data-lang="text">% mvn -v
+Apache Maven 3.6.3 (cecedd343002696d0abb50b32b541b8a6ba2883f)
+Maven home: /Users/jack/software/apache-maven-3.6.3
+Java version: 1.8.0_301, vendor: Oracle Corporation, runtime: /Library/Java/JavaVirtualMachines/jdk1.8.0_301.jdk/Contents/Home/jre
+Default locale: zh_CN, platform encoding: UTF-8
+OS name: "mac os x", version: "10.15.7", arch: "x86_64", family: "mac"</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="默认locale的作用"><a class="anchor" href="#默认locale的作用"></a>1.7. 默认locale的作用</h3>
+<div class="paragraph">
+<p>默认locale只是系统提供的一种默认的语言地区和编码方式，编写的应用程序未必会使用，一般调用三方的类库，在不指定locale的情况下会用默认的locale，三方类库一般是遵循这种约定俗成的习惯的，但如果是自己开发的类库，就不一定了，因此即使我们指定了默认值，但最终使用的是不是默认值，还得看程序怎么写。</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+ 0.0.1-SNAPSHOT<br>
+Last updated 2022-01-26 14:36:22 UTC
+</div>
+</div>
+</div>
+  </div>
+</div>
+</body>
+</html>

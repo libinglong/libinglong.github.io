@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.10">
+<title>java技术</title>
+<link rel="stylesheet" href="css/site.css">
+<script src="js/setup.js"></script><script defer src="js/site.js"></script>
+
+</head>
+<body id="java" class="book toc2 toc-left"><div id="banner-container" class="container" role="banner">
+  <div id="banner" class="contained" role="banner">
+    <div id="switch-theme">
+      <input type="checkbox" id="switch-theme-checkbox" />
+      <label for="switch-theme-checkbox">Dark Theme</label>
+    </div>
+  </div>
+</div>
+<div id="tocbar-container" class="container" role="navigation">
+  <div id="tocbar" class="contained" role="navigation">
+    <button id="toggle-toc"></button>
+  </div>
+</div>
+<div id="main-container" class="container">
+  <div id="main" class="contained">
+    <div id="doc" class="doc">
+<div id="header">
+<h1>java技术</h1>
+<div class="details">
+<span id="revnumber"> 0.0.1-SNAPSHOT</span>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<span id="back-to-index"><a href="../index.html">Back to index</a></span><ul class="sectlevel1">
+<li><a href="#jvm-options">1. JVM Options</a>
+<ul class="sectlevel2">
+<li><a href="#垃圾回收器">1.1. 垃圾回收器</a>
+<ul class="sectlevel3">
+<li><a href="#serial-collector">1.1.1. Serial Collector</a></li>
+<li><a href="#parallel-collector">1.1.2. Parallel Collector</a></li>
+<li><a href="#concurrent-mark-sweep-cms-collector">1.1.3. Concurrent Mark Sweep (CMS) Collector</a></li>
+<li><a href="#garbage-first-garbage-collector">1.1.4. Garbage-First Garbage Collector</a></li>
+<li><a href="#z-garbage-collector">1.1.5. Z Garbage Collector</a></li>
+</ul>
+</li>
+<li><a href="#内存设置">1.2. 内存设置</a></li>
+<li><a href="#gc其他配置">1.3. gc其他配置</a></li>
+<li><a href="#vm日志">1.4. vm日志</a>
+<ul class="sectlevel3">
+<li><a href="#gc日志">1.4.1. gc日志</a></li>
+<li><a href="#其他日志">1.4.2. 其他日志</a></li>
+</ul>
+</li>
+<li><a href="#容器支持">1.5. 容器支持</a></li>
+<li><a href="#其他">1.6. 其他</a></li>
+</ul>
+</li>
+<li><a href="#jvm-options-实践">2. JVM Options 实践</a>
+<ul class="sectlevel2">
+<li><a href="#jdk8u">2.1. JDK8u</a>
+<ul class="sectlevel3">
+<li><a href="#必选">2.1.1. 必选</a></li>
+<li><a href="#定制">2.1.2. 定制</a></li>
+<li><a href="#可选">2.1.3. 可选</a></li>
+</ul>
+</li>
+<li><a href="#jdk11">2.2. JDK11</a>
+<ul class="sectlevel3">
+<li><a href="#必选-2">2.2.1. 必选</a></li>
+<li><a href="#定制-2">2.2.2. 定制</a></li>
+</ul>
+</li>
+<li><a href="#jdk17">2.3. JDK17</a>
+<ul class="sectlevel3">
+<li><a href="#必选-3">2.3.1. 必选</a></li>
+<li><a href="#定制-3">2.3.2. 定制</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#java-lock">3. java lock</a>
+<ul class="sectlevel2">
+<li><a href="#synchronized-lock">3.1. synchronized lock</a></li>
+<li><a href="#reentrantlock">3.2. ReentrantLock</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="jvm-options"><a class="anchor" href="#jvm-options"></a>1. JVM Options</h2>
+<div class="sectionbody">
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+本文参数解释基本都是直接来源于官方文档，部分官方文档解释较为模糊的，加入了自己的说明。
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Java LTS(Long Term Support) 包括JDK8/11/17,本文只讨论三个长期支持版本</p>
+</div>
+<div class="paragraph">
+<p><a href="https://www.oracle.com/java/technologies/java-se-support-roadmap.html">Java LTS</a></p>
+</div>
+<div class="paragraph">
+<p><a href="https://docs.oracle.com/javase/8/docs/technotes/tools/unix/java.html#BABDJJFI">JDK8  java command for unix</a></p>
+</div>
+<div class="paragraph">
+<p><a href="https://docs.oracle.com/en/java/javase/11/tools/java.html#GUID-3B1CE181-CD30-4178-9602-230B800D4FAE">JDK11 java command</a></p>
+</div>
+<div class="paragraph">
+<p><a href="https://docs.oracle.com/en/java/javase/17/docs/specs/man/java.html">JDK17 java command</a></p>
+</div>
+<div class="sect2">
+<h3 id="垃圾回收器"><a class="anchor" href="#垃圾回收器"></a>1.1. 垃圾回收器</h3>
+<div class="paragraph">
+<p>我们只讨论jdk8和jdk11文档中提到的回收器，除此以外的回收器组合方式，将不在此讨论</p>
+</div>
+<div class="paragraph">
+<p><a href="https://docs.oracle.com/javase/8/docs/technotes/guides/vm/gctuning/collectors.html#sthref27">JDK8回收器</a></p>
+</div>
+<div class="paragraph">
+<p><a href="https://docs.oracle.com/en/java/javase/11/gctuning/available-collectors.html#GUID-414C9D95-297E-4EE3-B0D9-36F158A83393">JDK11回收器</a></p>
+</div>
+<div class="sect3">
+<h4 id="serial-collector"><a class="anchor" href="#serial-collector"></a>1.1.1. Serial Collector</h4>
+<div class="paragraph">
+<p>在JDK8/11/17中可用</p>
+</div>
+<div class="paragraph">
+<p>单线程回收器，在小内存100MB的应用中很有用，使用-XX:+UseSerialGC启用</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="parallel-collector"><a class="anchor" href="#parallel-collector"></a>1.1.2. Parallel Collector</h4>
+<div class="paragraph">
+<p>在JDK8/11/17中可用，是JDK8的默认收齐器</p>
+</div>
+<div class="paragraph">
+<p>提供更高的吞吐量，适用于中大型数据的在多处理器运行的应用程序，使用-XX:+UseParallelGC启用。当启用该回收器时，老年代的回收默认也是并行回收的，但可以通过使用-XX:-UseParallelOldGC禁用掉。</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="concurrent-mark-sweep-cms-collector"><a class="anchor" href="#concurrent-mark-sweep-cms-collector"></a>1.1.3. Concurrent Mark Sweep (CMS) Collector</h4>
+<div class="paragraph">
+<p>在JDK8/11中可用，CMS在JDK9中就已经标记为弃用，因此不建议在JDK11中使用</p>
+</div>
+<div class="paragraph">
+<p>适用于大中型数据的应用程序，但相比Parallel Collector提供更低的延迟，通过-XX:+UseConcMarkSweepGC启用</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="garbage-first-garbage-collector"><a class="anchor" href="#garbage-first-garbage-collector"></a>1.1.4. Garbage-First Garbage Collector</h4>
+<div class="paragraph">
+<p>在JDK8/11/17中可用，JDK11中多数系统默认使用G1回收器</p>
+</div>
+<div class="paragraph">
+<p>适用于大中型以及超大数据的应用程序，但相比Parallel Collector提供更低的延迟，通过-XX:+UseG1GC启用</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+对于超大型内存的应用，如果想获得较低的gc停顿，G1是首选，因为G1的young gc可以是部分回收，而CMS每次都回收整个年轻代
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="z-garbage-collector"><a class="anchor" href="#z-garbage-collector"></a>1.1.5. Z Garbage Collector</h4>
+<div class="paragraph">
+<p>JDK11实验特性/17中可用</p>
+</div>
+<div class="paragraph">
+<p>可扩展低延迟垃圾收集器，并发执行所有昂贵的工作，且不会停止应用线程的运行。适用于低延迟(小于10ms)或者非常大的堆(数TB)的应用程序，通过使用-XX:+UseZGC启用</p>
+</div>
+<div class="paragraph">
+<p>ZGC作为实验特性，从JDK11开始。如果延迟具有非常高的优先级，或者堆非常大，可以使用ZGC</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+以下提到的vm参数，如无特别说明，在JDK8/11/17中均可用，另外，所有参数说明来自于oracle官方文档。我在Openjdk官网并没有找到java command相关文档.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="内存设置"><a class="anchor" href="#内存设置"></a>1.2. 内存设置</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>-Xmn
++ 设置年轻代的初始和最大值。k/K表示kilobytes，m/M表示megabytes, g/G表示gigabytes。</p>
+<div class="paragraph">
+<p>比如256MB的多种表示<br>
+-Xmn256m<br>
+-Xmn262144k<br>
+-Xmn268435456<br>
+也可以使用-XX:NewSize设置初始值，-XX:MaxNewSize设置最大值</p>
+</div>
+</li>
+<li>
+<p>-Xms</p>
+<div class="paragraph">
+<p>设置heap的最小值和初始值，该值必须是1024倍数，且大于1MB。k/K表示kilobytes，m/M表示megabytes, g/G表示gigabytes。
+比如6MB的多种表示
+-Xms6291456
+-Xms6144k
+-Xms6m
+如果不设置此参数，则其值为初始年轻代大小和老年代的和。如果-XX:InitalHeapSize出现在-Xms后面，则初始值被-XX:InitalHeapSize覆盖。</p>
+</div>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+官方文档中说不设置此参数，其值为初始年轻代大小和老年代的和，可是这个时候老年代大小是通过什么指定的呢？
+</td>
+</tr>
+</table>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>-Xmx</p>
+<div class="paragraph">
+<p>设置堆的最大值。该值必须是1024倍数且大于2MB。<br>
+例如80MB<br>
+-Xmx83886080<br>
+-Xmx81920k<br>
+-Xmx80m<br>
+等价于-XX:MaxHeapSize。</p>
+</div>
+</li>
+<li>
+<p>-Xss</p>
+<div class="paragraph">
+<p>设置线程栈的大小 k/K表示kilobytes，m/M表示megabytes,g/G表示gigabytes。平台默认值：<br>
+Linux/ARM (32-bit): 320 KB<br>
+Linux/i386 (32-bit): 320 KB<br>
+Linux/x64 (64-bit): 1024 KB<br>
+OS X (64-bit): 1024 KB<br>
+Oracle Solaris/i386 (32-bit): 320 KB<br>
+Oracle Solaris/x64 (64-bit): 1024 KB<br>
+比如1024KB的多种表示：<br>
+-Xss1m<br>
+-Xss1024k<br>
+-Xss1048576<br>
+该参数等价于-XX:ThreadStackSize</p>
+</div>
+</li>
+<li>
+<p>-XX:InitialHeapSize=size 略</p>
+</li>
+<li>
+<p>-XX:InitialRAMPercentage=percent</p>
+<div class="paragraph">
+<p>JVM可以使用的初始RAM占宿主机的百分比，例如5%<br>
+-XX:InitialRAMPercentage=5</p>
+</div>
+</li>
+<li>
+<p>-XX:MinRAMPercentage=percent</p>
+<div class="paragraph">
+<p>JVM最小可以使用的初始RAM占宿主机的百分比</p>
+</div>
+</li>
+<li>
+<p>-XX:MaxRAMPercentage=percent</p>
+<div class="paragraph">
+<p>JVM最大可以使用的初始RAM占宿主机的百分比</p>
+</div>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+部分平台必须写成小数-XX:InitialRAMPercentage=5.0
+</td>
+</tr>
+</table>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>-XX:NewRatio=ratio</p>
+<div class="paragraph">
+<p>经验证是老年代/年轻代的比值，年轻代是分母</p>
+</div>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+令人困惑的是，官方文档写的是young/old radio，是英语表达分母的方式不同吗？？
+</td>
+</tr>
+</table>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>-XX:InitialSurvivorRatio=ratio</p>
+<div class="paragraph">
+<p>初始存活区比例，用于ParallelGC</p>
+</div>
+</li>
+<li>
+<p>-XX:SurvivorRatio</p>
+<div class="paragraph">
+<p>存活区比例</p>
+</div>
+</li>
+<li>
+<p>-XX:MaxHeapSize=size 略</p>
+</li>
+<li>
+<p>-XX:MetaspaceSize=size -XX:MaxMetaspaceSize=size</p>
+<div class="paragraph">
+<p>元数据占用内存设置</p>
+</div>
+<div class="paragraph">
+<p>例子<br>
+-XX:MaxMetaspaceSize=256m</p>
+</div>
+</li>
+<li>
+<p>-XX:SurvivorRatio=ratio</p>
+<div class="paragraph">
+<p>eden/survivor比值</p>
+</div>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+survivor有两个，因此假设heap为100M,-XX:SurvivorRatio=8,则eden为80m，两个survivor各占10m
+</td>
+</tr>
+</table>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>-XX:TargetSurvivorRatio=ratio</p>
+<div class="paragraph">
+<p>例如-XX:TargetSurvivorRatio=80表示：<br>
+Survivor区从年龄为1到n的对象如果超过了80%，那么年龄阈值动态调整为n</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="gc其他配置"><a class="anchor" href="#gc其他配置"></a>1.3. gc其他配置</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>-XX:MaxGCPauseMillis=time</p>
+<div class="paragraph">
+<p>目标gc停顿时间。虽然官方文档未提及，但该参数应该只用于G1</p>
+</div>
+</li>
+<li>
+<p>-XX:MaxTenuringThreshold=threshold</p>
+<div class="paragraph">
+<p>年龄阈值，超过此年龄的对象晋升到老年代</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="vm日志"><a class="anchor" href="#vm日志"></a>1.4. vm日志</h3>
+<div class="sect3">
+<h4 id="gc日志"><a class="anchor" href="#gc日志"></a>1.4.1. gc日志</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>-verbose:gc</p>
+<div class="paragraph">
+<p>显示gc事件的信息</p>
+</div>
+</li>
+<li>
+<p>-Xloggc:filename</p>
+<div class="paragraph">
+<p>JDK8可用，JDK11/17弃用<br>
+设置日志事件输出的文件，输出信息和-verbose:gc相似，该参数会覆盖-verbose:gc</p>
+</div>
+</li>
+<li>
+<p>-XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles -XX:GCLogFileSize</p>
+<div class="paragraph">
+<p>JDK8文档未说明（估计不可用），根据openjdk源码发现JDK8u可用(具体8u的哪个版本开始支持未确认)，JDK11/17不可用<br>
+支持按gc日志大小滚动<br>
+参考 <a href="https://stackoverflow.com/questions/35629487/can-we-rotate-gc-log-based-on-specific-time-in-jdk-8">Can we rotate GC log based on Specific Time in JDK 8?</a><br>
+参考 <a href="http://hg.openjdk.java.net/jdk8u/jdk8u/hotspot/file/2b2511bd3cc8/src/share/vm/runtime/globals.hpp#l2447">JDK8u源码</a><br>
+example：-XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=1k<br>
+该配置使得日志文件在到达1k大小时，新建新的日志文件，日志文件数最大为5个</p>
+</div>
+</li>
+<li>
+<p>仅JDK8可用的一些参数，以及在JDK11/17的替代</p>
+<div class="paragraph">
+<p>-XX:+PrintGC -Xlog:gc<br>
+-XX:PrintGCApplicationConcurrentTime -Xlog:safepoint<br>
+-XX:PrintGCApplicationStoppedTime -Xlog:safepoint<br>
+-XX:+PrintGCDateStamps 无替代<br>
+-XX:+PrintGCDetails -Xlog:gc*<br>
+-XX:+PrintGCTaskTimeStamps -Xlog:gc+task*=debug<br>
+-XX:+PrintGCTimeStamps 无替代<br>
+-XX:+PrintTenuringDistribution -Xlog:gc+age*=level</p>
+</div>
+</li>
+<li>
+<p>JDK8文档没有，估计在JDK8u中</p>
+<div class="paragraph">
+<p>-XX:+PrintHeapAtGC -Xlog:gc+heap=trace<br>
+-XX:+PrintReferenceGC -Xlog:gc+ref*=debug<br>
+-XX:+SafepointTimeout 开启safepoint超时<br>
+-XX:SafepointTimeoutDelay=1000 safepoint超时时间<br>
+-XX:+PrintSafepointStatistics 打印Safepoint统计信息<br>
+-XX:PrintSafepointStatisticsCount=1 TODO</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="其他日志"><a class="anchor" href="#其他日志"></a>1.4.2. 其他日志</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>-verbose:class</p>
+<div class="paragraph">
+<p>显示加载类的信息</p>
+</div>
+</li>
+<li>
+<p>-verbose:jni
+显示native方法，jni活动的信息</p>
+</li>
+<li>
+<p>-XX:+PrintCommandLineFlags</p>
+<div class="paragraph">
+<p>打印在命令行指定的jvm参数</p>
+</div>
+</li>
+<li>
+<p>-XX:+PrintContainerInfo</p>
+<div class="paragraph">
+<p>JDK8可用，JDK11/17不可用<br>
+打印容器信息</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="容器支持"><a class="anchor" href="#容器支持"></a>1.5. 容器支持</h3>
+<div class="paragraph">
+<p>-XX:+UseContainerSupport</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="其他"><a class="anchor" href="#其他"></a>1.6. 其他</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>--dry-run</p>
+<div class="paragraph">
+<p>JDK11/17 创建虚拟机但是不执行main方法，在验证命令行参数时十分有用</p>
+</div>
+</li>
+<li>
+<p>--version</p>
+<div class="paragraph">
+<p>JDK11/17 打印版本号至标准输出并退出</p>
+</div>
+</li>
+<li>
+<p>-version</p>
+<div class="paragraph">
+<p>打印版本号至标准错误并退出</p>
+</div>
+</li>
+<li>
+<p>-help or -?
++ 帮助</p>
+</li>
+<li>
+<p>-server
+以服务器vm启动应用，启动速度变慢，但随着时间推移，运行应用速度变快</p>
+</li>
+<li>
+<p>-XshowSettings:category
+显示设置并继续，可能的category值如下：</p>
+<div class="ulist">
+<ul>
+<li>
+<p>all 显示所有设置，默认值</p>
+</li>
+<li>
+<p>locale
+显示locale</p>
+</li>
+<li>
+<p>properties
+显示系统属性</p>
+</li>
+<li>
+<p>vm
+显示jvm设置</p>
+</li>
+<li>
+<p>system JDK11/17 on Linux: 显示宿主机或容器配置</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>-XX:NativeMemoryTracking=mode
+跟踪jvm native内存的使用，mode可以是以下值</p>
+<div class="ulist">
+<ul>
+<li>
+<p>off 关闭，等同于不添加此参数</p>
+</li>
+<li>
+<p>summary 仅跟踪jvm子系统，如java heap，class，code，thread</p>
+</li>
+<li>
+<p>detail 除跟踪jvm子系统，还会跟踪 individual CallSite, individual virtual memory region，committed regions</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>-XX:-UseBiasedLocking</p>
+<div class="paragraph">
+<p>禁用偏向锁。偏向锁在有大量非竞争同步的应用中可以显著加快运行速度，但某些锁定模式下会减速。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>JDK8/11默认是开启的。</p>
+</li>
+<li>
+<p>JDK17默认是禁用的。</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>-XX:+HeapDumpOnOutOfMemoryError</p>
+<div class="paragraph">
+<p>发生java.lang.OutOfMemoryError导出内存快照</p>
+</div>
+</li>
+<li>
+<p>-XX:HeapDumpPath=path</p>
+<div class="paragraph">
+<p>当指定-XX:+HeapDumpOnOutOfMemoryError时，配置内存快照导出的文件位置</p>
+</div>
+</li>
+<li>
+<p>-XX:LogFile=path</p>
+<div class="paragraph">
+<p>hotspot日志位置</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="jvm-options-实践"><a class="anchor" href="#jvm-options-实践"></a>2. JVM Options 实践</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>本节讨论了JDK8u/11/17在生产中的配置</p>
+</div>
+<div class="sect2">
+<h3 id="jdk8u"><a class="anchor" href="#jdk8u"></a>2.1. JDK8u</h3>
+<div class="sect3">
+<h4 id="必选"><a class="anchor" href="#必选"></a>2.1.1. 必选</h4>
+<div class="paragraph">
+<p>-XX:+PrintGC -XX:+PrintReferenceGC -XX:+PrintHeapAtGC -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+PrintGCApplicationConcurrentTime -XX:+PrintTenuringDistribution -XX:+SafepointTimeout -XX:SafepointTimeoutDelay=1000 -XX:PrintSafepointStatisticsCount=1 -XX:+PrintSafepointStatistics -XX:-UseBiasedLocking -Xss256k -XX:+PrintContainerInfo</p>
+</div>
+<div class="paragraph">
+<p>-Xloggc:gc.log 如果每次文件位置固定，注意防止覆盖，方便分析问题</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="定制"><a class="anchor" href="#定制"></a>2.1.2. 定制</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>垃圾回收器选择</p>
+<div class="ulist">
+<ul>
+<li>
+<p>G1 -XX:+UseG1GC</p>
+<div class="ulist">
+<ul>
+<li>
+<p>-XX:MaxGCPauseMillis=</p>
+<div class="paragraph">
+<p>设置期望的gc最大停顿时间(毫秒)</p>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>CMS -XX:+UseConcMarkSweepGC</p>
+<div class="paragraph">
+<p>推荐使用G1作为生产默认选择</p>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>内存</p>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>按比例配置方式</p>
+<div class="paragraph">
+<p>推荐默认按比例配置</p>
+</div>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>按比例配置heap</p>
+<div class="paragraph">
+<p>三个值保持一致，注意，这里的值是百分比<br>
+-XX:InitialRAMPercentage=75.0<br>
+-XX:MinRAMPercentage=75.0<br>
+-XX:MaxRAMPercentage=75.0</p>
+</div>
+</li>
+<li>
+<p>按比例配置新生代和老年代</p>
+<div class="paragraph">
+<p>注意，这里的值，是老年代/新生代的比值，新生代是分母，值必须是整数，因此导致老年代总是&gt;=新生代。对于web应用，往往老年代很小，因此建议不要使用此参数调节配比，而是通过计算的方式，使用-Xmn来设置年轻代内存。<br>
+-XX:NewRatio=ratio</p>
+</div>
+</li>
+<li>
+<p>按比例配置eden和survivor区</p>
+<div class="paragraph">
+<p>这里的值是eden/survivor的比值，注意survivor有两个,假设radio=5，那么eden=young * 5/(5 + 1*2)。<br>
+-XX:SurvivorRatio=radio</p>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>按数值配置</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>配置堆</p>
+<div class="paragraph">
+<p>设置堆的初始值和最大值为同一个值<br>
+例如 -Xmx1024m -Xms1024m</p>
+</div>
+</li>
+<li>
+<p>配置新生代</p>
+<div class="paragraph">
+<p>例如 -Xmn512m</p>
+</div>
+</li>
+<li>
+<p>配置eden和survivor区</p>
+<div class="paragraph">
+<p>Survivor区只能通过比例配置。</p>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>locale</p>
+<div class="paragraph">
+<p>建议使用以下默认值</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>文件编码 -Dfile.encoding=UTF-8</p>
+</li>
+<li>
+<p>国家 -Duser.country=CN</p>
+</li>
+<li>
+<p>语言 -Duser.language=zh</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+关于java在容器中locale更多细节见<a href="../docker/docker-index.html#java-locale">java-locale</a>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="可选"><a class="anchor" href="#可选"></a>2.1.3. 可选</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>safepoint</p>
+<div class="paragraph">
+<p>如果Safepoint相关日志没有输出至stdout，添加下述参数，这里的细节记不清了</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>-XX:+UnlockDiagnosticVMOptions</p>
+</li>
+<li>
+<p>-XX:+LogVMOutput</p>
+</li>
+<li>
+<p>-XX:LogFile=vm.log</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>stdout和stderr记得重定向到文件或者进行采集<br>
+如果日志文件位置固定，注意防止覆盖，或进行采集</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="jdk11"><a class="anchor" href="#jdk11"></a>2.2. JDK11</h3>
+<div class="sect3">
+<h4 id="必选-2"><a class="anchor" href="#必选-2"></a>2.2.1. 必选</h4>
+<div class="paragraph">
+<p>-XX:-UseBiasedLocking -Xss256k -Xlog:gc*,safepoint=debug:path/to/gc.log:time,uptime,level,tags</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="定制-2"><a class="anchor" href="#定制-2"></a>2.2.2. 定制</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>垃圾回收器</p>
+<div class="paragraph">
+<p>JDK11建议仅提供G1 GC，配置方法与JDK8u相同</p>
+</div>
+</li>
+<li>
+<p>内存配置 与JDK8u相同</p>
+</li>
+<li>
+<p>locale 与JDK8u相同</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>在macos zsh终端环境，-Xlog因为有通配符，需要加引号，否则报错zsh: no matches found，例子：<br>
+java "-Xlog:gc*,safepoint=debug:gc.log:time,uptime,level,tags" -jar odin-infra-data.jar</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="jdk17"><a class="anchor" href="#jdk17"></a>2.3. JDK17</h3>
+<div class="sect3">
+<h4 id="必选-3"><a class="anchor" href="#必选-3"></a>2.3.1. 必选</h4>
+<div class="paragraph">
+<p>同JDK11</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="定制-3"><a class="anchor" href="#定制-3"></a>2.3.2. 定制</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>垃圾回收器</p>
+<div class="paragraph">
+<p>推荐默认ZGC</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>G1 -XX:+UseG1GC</p>
+</li>
+<li>
+<p>ZGC -XX:+UseZGC</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>内存 同JDK8u</p>
+</li>
+<li>
+<p>locale 同JDK8u</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="java-lock"><a class="anchor" href="#java-lock"></a>3. java lock</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="synchronized-lock"><a class="anchor" href="#synchronized-lock"></a>3.1. synchronized lock</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>非公平</p>
+</li>
+<li>
+<p>类型</p>
+</li>
+<li>
+<p>偏向锁</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>第一次通过cas获取锁，之后则一直占有该锁，如果有线程竞争，必须等到safepoint才能释放锁</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>轻量级锁</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>通过cas + 短暂的自旋获取锁</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>重量级锁</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>线程挂起，上下文切换</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>优点</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>自动释放锁，不容易发生死锁</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>缺点</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>jvm实现，非api，因此很多Lock实现的功能都没有</p>
+</div>
+<div class="paragraph">
+<p>需要判断到底锁住了哪些对象，比如按类的实例去锁，不同的类加载器，可能表现非预期</p>
+</div>
+<div class="paragraph">
+<p>每个对象头中添加额外的锁信息，大量浪费内存</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="reentrantlock"><a class="anchor" href="#reentrantlock"></a>3.2. ReentrantLock</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>可通过参数控制是否公平</p>
+</li>
+<li>
+<p>api丰富</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+ 0.0.1-SNAPSHOT<br>
+Last updated 2022-01-26 14:36:22 UTC
+</div>
+</div>
+</div>
+  </div>
+</div>
+</body>
+</html>

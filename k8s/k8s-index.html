@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.10">
+<title>k8s技术</title>
+<link rel="stylesheet" href="css/site.css">
+<script src="js/setup.js"></script><script defer src="js/site.js"></script>
+
+</head>
+<body id="k8s" class="book toc2 toc-left"><div id="banner-container" class="container" role="banner">
+  <div id="banner" class="contained" role="banner">
+    <div id="switch-theme">
+      <input type="checkbox" id="switch-theme-checkbox" />
+      <label for="switch-theme-checkbox">Dark Theme</label>
+    </div>
+  </div>
+</div>
+<div id="tocbar-container" class="container" role="navigation">
+  <div id="tocbar" class="contained" role="navigation">
+    <button id="toggle-toc"></button>
+  </div>
+</div>
+<div id="main-container" class="container">
+  <div id="main" class="contained">
+    <div id="doc" class="doc">
+<div id="header">
+<h1>k8s技术</h1>
+<div class="details">
+<span id="revnumber"> 0.0.1-SNAPSHOT</span>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<span id="back-to-index"><a href="../index.html">Back to index</a></span><ul class="sectlevel1">
+<li><a href="#k8s-用户">1. k8s 用户</a>
+<ul class="sectlevel2">
+<li><a href="#创建用户">1.1. 创建用户</a></li>
+<li><a href="#如何防止权限扩散">1.2. 如何防止权限扩散</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="k8s-用户"><a class="anchor" href="#k8s-用户"></a>1. k8s 用户</h2>
+<div class="sectionbody">
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p><a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" class="bare">https://kubernetes.io/docs/reference/access-authn-authz/authentication/</a></p>
+</div>
+<div class="paragraph">
+<p>All Kubernetes clusters have two categories of users: service accounts managed by Kubernetes, and normal users.</p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>根据官方文档，可以将用户分为两类</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>由k8s集群管理的service account</p>
+<div class="paragraph">
+<p>service account可以通过k8s api创建</p>
+</div>
+</li>
+<li>
+<p>普通用户</p>
+<div class="paragraph">
+<p>k8s中没有关于普通用户的对象，因此无法通过k8s api创建。任何提供由k8s的CA证书签发的证书的客户端，对于k8s来说都是属于该类用户。证书中的subject字段，描述了用户名称和用户所属的组。</p>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>例如，使用openssl签发证书</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-shell" data-lang="shell">openssl req -new -key jbeda.pem -out jbeda-csr.pem -subj "/CN=jbeda/O=app1/O=app2"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>比如上述命令生成的证书中的subject字段中，用户名就是jbeda，用户属于app1和app2</p>
+</div>
+<div class="sect2">
+<h3 id="创建用户"><a class="anchor" href="#创建用户"></a>1.1. 创建用户</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>创建service account</p>
+<div class="paragraph">
+<p>直接通过k8s api创建，该类用户不能指定group字段，但是有默认的分组</p>
+</div>
+</li>
+</ul>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p><a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" class="bare">https://kubernetes.io/docs/reference/access-authn-authz/authentication/</a></p>
+</div>
+<div class="paragraph">
+<p>Service accounts authenticate with the username <code>system:serviceaccount:(NAMESPACE):(SERVICEACCOUNT)</code>, and are assigned to the groups <code>system:serviceaccounts</code> and <code>system:serviceaccounts:(NAMESPACE)</code></p>
+</div>
+</blockquote>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>创建普通用户</p>
+<div class="ulist">
+<ul>
+<li>
+<p>如何签发客户端证书</p>
+<div class="paragraph">
+<p>必须使用k8sCA证书签发的证书才能通过认证，使用ca证书签发的子证书再次进行签发，是不会通过认证的。</p>
+</div>
+</li>
+<li>
+<p>mac中minikube对应位置</p>
+<div class="paragraph">
+<p>~/.minikube/ca.crt</p>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>kubeadm安装的k8s集群</p>
+<div class="paragraph">
+<p>参考官方文档https://kubernetes.io/docs/setup/best-practices/certificates/#where-certificates-are-stored[证书位置]</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="如何防止权限扩散"><a class="anchor" href="#如何防止权限扩散"></a>1.2. 如何防止权限扩散</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>对于service account而言，其权限可以通过k8s api的rbac控制，这里不再赘述</p>
+</li>
+<li>
+<p>对于普通用户，是通过CA证书签发来完成创建过程，创建过程需要用到的核心的两个文件就是ca.crt和ca.key，ca.crt是要分发给客户端做tls认证用的，因此必然会分发出去，而ca.key则不需要分发，因此集群管理员必须要注意，不要泄露ca.key.</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+kubeconfig中一般都可以找到k8s的ca证书，一般是base64格式或者配置一个文件位置
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+ 0.0.1-SNAPSHOT<br>
+Last updated 2022-01-26 14:36:22 UTC
+</div>
+</div>
+</div>
+  </div>
+</div>
+</body>
+</html>
