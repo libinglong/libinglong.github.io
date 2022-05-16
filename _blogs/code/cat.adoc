@@ -1,0 +1,17 @@
+:page-layout: post
+:page-title: cat自定义日志路径
+:page-categories: blog
+include::../attributes.adoc[]
+== cat日志路径
+
+* 从plexus获取日志路径配置
++
+image:../images/image-20211125173001198.png[image-20211125173001198]
+
+* 日志配置如下
++
+image:../images/image-20211125173103300.png[image-20211125173103300]
+
+* 同时提供了可以覆盖日志路径的变量
++
+image:../images/image-20211125173258219.png[image-20211125173258219]

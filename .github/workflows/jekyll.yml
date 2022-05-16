@@ -1,0 +1,29 @@
+name: Jekyll site CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the site in the jekyll/builder container
+      run: |
+        docker run \
+        -v ${{ github.workspace }}:/srv/jekyll \
+        jekyll/builder:latest /bin/bash -c "chmod -R 777 /srv/jekyll && bundle install && bundle exec jekyll build"
+        
+    - name: Deploy to GitHub Pages
+      if: success()
+      uses: crazy-max/ghaction-github-pages@v2
+      with:
+        target_branch: publish
+        build_dir: _site
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

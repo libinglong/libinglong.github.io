@@ -1,0 +1,144 @@
+:page-layout: post
+:page-title: 在k8s中使用无状态的jenkins
+:page-categories: blog
+include::../attributes.adoc[]
+
+== 为什么使用无状态的jenkins
+公司一直都是使用jenkins作为项目构建工具，但是jenkins本身是单点的，而当下的架构设计一般都是高可用的，因此有一个单点系统，让人很不爽，尽管上层是面向b端的产品，即使发生故障，影响也不大。但是为了方便维护，我仍然将其改造为无状态的服务。
+
+如果没有历史债务的话，可以尝试看下tekton或者自研构建工具。个人认为jenkins的设计已经过时。
+在对接jenkins时，有几点感受说下，个人见解。
+
+. restful api难用
+.. 支持folder类型的job，却不支持类似于mkdir -p这样的创建方式，要逐级创建
+.. restful api不支持创建或更新这样的融合操作，当一个job不存在的时候，他才能被创建，否则会报job已经存在，逻辑上没问题，但是操作上很拉胯
+. 插件系统过时
+.. 插件系统的dsl语言很难写，文档查起来更是费劲，对比gitlab，github，这与容器化构建环境的理念背驰
+.. 插件本身不支持的行为，就需要改插件代码扩展
+
+== 使用minikube搭建k8s
+[source,shell]
+----
+minikube start  --driver=none --image-mirror-country=cn
+----
+如果有代理需求，参考link:../minikube[minikube搭建]
+
+== 创建jenkins命名空间
+
+[source,yaml]
+----
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jenkins
+----
+
+== 创建jenkins sa,role,role-binding
+
+[source,yaml]
+----
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jenkins
+  namespace: jenkins
+
+----
+
+[source,yaml]
+----
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: jenkins
+  namespace: jenkins
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["create","delete","get","list","patch","update","watch"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create","delete","get","list","patch","update","watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get","list","watch"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
+
+----
+
+[source,yaml]
+----
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: jenkins
+  namespace: jenkins
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: jenkins
+subjects:
+  - kind: ServiceAccount
+    name: jenkins
+
+----
+
+== 创建jenkins deploy
+
+[source,yaml]
+----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins-deploy
+  namespace: jenkins
+  labels:
+    app: jenkins-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      serviceAccountName: jenkins
+      containers:
+        - name: jenkins
+          image: xxx
+          ports:
+            - containerPort: 8080
+            - containerPort: 50000
+
+----
+
+== 创建jenkins service
+[source,yaml]
+----
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins
+  namespace: jenkins
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: web
+      nodePort: 30000
+    - port: 50000
+      targetPort: 50000
+      protocol: TCP
+      name: jnlp
+  selector:
+    app: jenkins
+
+----
+

@@ -1,0 +1,125 @@
+:page-layout: post
+:page-title: JDK8u/11/17 JVM Options实践
+:page-categories: java
+include::../attributes.adoc[]
+== 简介
+本节讨论了JDK8u/11/17在生产中的配置
+
+== JDK8u
+
+=== 必选
+-XX:+PrintGC -XX:+PrintReferenceGC -XX:+PrintHeapAtGC -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+PrintGCApplicationConcurrentTime -XX:+PrintTenuringDistribution -XX:+SafepointTimeout -XX:SafepointTimeoutDelay=1000 -XX:PrintSafepointStatisticsCount=1 -XX:+PrintSafepointStatistics -XX:-UseBiasedLocking -Xss256k -XX:+PrintContainerInfo
+
+-Xloggc:gc.log 如果每次文件位置固定，注意防止覆盖，方便分析问题
+
+=== 定制
+* 垃圾回收器选择
+** G1 -XX:+UseG1GC
+*** -XX:MaxGCPauseMillis=
++
+设置期望的gc最大停顿时间(毫秒)
+** CMS -XX:+UseConcMarkSweepGC
++
+推荐使用G1作为生产默认选择
+
+* 内存
+. 按比例配置方式
++
+推荐默认按比例配置
+
+.. 按比例配置heap
++
+[%hardbreaks]
+三个值保持一致，注意，这里的值是百分比
+-XX:InitialRAMPercentage=75.0
+-XX:MinRAMPercentage=75.0
+-XX:MaxRAMPercentage=75.0
+.. 按比例配置新生代和老年代
++
+[%hardbreaks]
+注意，这里的值，是老年代/新生代的比值，新生代是分母，值必须是整数，因此导致老年代总是>=新生代。对于web应用，往往老年代很小，因此建议不要使用此参数调节配比，而是通过计算的方式，使用-Xmn来设置年轻代内存。
+-XX:NewRatio=ratio
+
+.. 按比例配置eden和survivor区
++
+[%hardbreaks]
+这里的值是eden/survivor的比值，注意survivor有两个,假设radio=5，那么eden=young * 5/(5 + 1*2)。
+-XX:SurvivorRatio=radio
+
+. 按数值配置
+.. 配置堆
++
+[%hardbreaks]
+设置堆的初始值和最大值为同一个值
+例如 -Xmx1024m -Xms1024m
+
+.. 配置新生代
++
+例如 -Xmn512m
+
+.. 配置eden和survivor区
++
+Survivor区只能通过比例配置。
+
+* locale
++
+建议使用以下默认值
+
+** 文件编码 -Dfile.encoding=UTF-8
+** 国家 -Duser.country=CN
+** 语言 -Duser.language=zh
+
+NOTE: 关于java在容器中locale更多细节见link:../docker/docker-index.html#java-locale[java-locale]
+
+=== 可选
+* safepoint
++
+如果Safepoint相关日志没有输出至stdout，添加下述参数，这里的细节记不清了
+
+** -XX:+UnlockDiagnosticVMOptions
+** -XX:+LogVMOutput
+** -XX:LogFile=vm.log
+
+[TIP]
+====
+[%hardbreaks]
+stdout和stderr记得重定向到文件或者进行采集
+如果日志文件位置固定，注意防止覆盖，或进行采集
+====
+
+== JDK11
+
+=== 必选
+-XX:-UseBiasedLocking -Xss256k -Xlog:gc*,safepoint=debug:path/to/gc.log:time,uptime,level,tags
+
+=== 定制
+* 垃圾回收器
++
+JDK11建议仅提供G1 GC，配置方法与JDK8u相同
+* 内存配置 与JDK8u相同
+* locale 与JDK8u相同
+
+
+[NOTE]
+====
+[%hardbreaks]
+在macos zsh终端环境，-Xlog因为有通配符，需要加引号，否则报错zsh: no matches found，例子：
+java "-Xlog:gc*,safepoint=debug:gc.log:time,uptime,level,tags" -jar odin-infra-data.jar
+====
+
+== JDK17
+
+=== 必选
+同JDK11
+
+=== 定制
+* 垃圾回收器
++
+推荐默认ZGC
+
+** G1 -XX:+UseG1GC
+** ZGC -XX:+UseZGC
+
+* 内存 同JDK8u
+
+* locale 同JDK8u

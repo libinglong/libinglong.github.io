@@ -1,0 +1,30 @@
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [["\\(", "\\)"]],
+            displayMath: [["\\[", "\\]"]],
+            tags: "ams",
+            autoload: {
+                color: [],
+                colorv2: ['color']
+            },
+            packages: {'[+]': ['noerrors']},
+            // https://github.com/mathjax/MathJax-src/issues/364#issuecomment-540508733
+            // 这里的处理转义恰好与asciidoctor生成的asciimath冲突
+            processEscapes: false
+        },
+        options: {
+            ignoreHtmlClass: "nostem|noasciimath",
+            processHtmlClass: 'tex2jax_process'
+        },
+        asciimath: {
+            delimiters: [["\\$", "\\$"]],
+            fixphi: false
+        },
+        loader: {
+            load: ['input/asciimath','output/chtml','input/tex']
+        }
+    };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js"></script>

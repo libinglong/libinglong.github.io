@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: site.lang | default: "en" }}">
+
+  <head>
+    {% include head.html %}
+  </head>
+
+  <body>
+    <header class="header-container">
+      {% include header.html %}
+    </header>
+    <div id="tocbar" style="display: none">
+      <button id="toggle-toc"></button>
+    </div>
+    <div class="site-container">
+      <div class="site-body">
+        <aside class="site-sidebar" id="site-sidebar">
+          <div class="fixed-sidebar">
+            {% if page.toc %}
+            {% include sidebar-toc.html %}
+            {% else %}
+            {% include sidebar.html %}
+            {% endif %}
+          </div>
+        </aside>
+        <main class="site-main" id="content" aria-label="Content" tabindex="1">
+          {{ content }}
+          <footer class="site-footer">
+            {% include footer.html %}
+          </footer>
+        </main>
+        <div class="site-toc">
+          <div id="toc" class="fixed-toc">{{ page.document | tocify_asciidoc }}</div>
+        </div>
+      </div>
+    </div>
+  </body>
+
+</html>

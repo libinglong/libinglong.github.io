@@ -1,0 +1,5 @@
+---
+layout: cols
+title: Spring Boot生产中的常用集成方案
+type: spring-boot
+---

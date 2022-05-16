@@ -1,0 +1,5 @@
+---
+layout: cols
+type: blog
+title: blogs
+---

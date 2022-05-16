@@ -1,0 +1,75 @@
+:page-layout: post
+:page-title: Spring Boot集成Redis
+:page-categories: spring-boot
+include::../attributes.adoc[]
+
+== 概览
+
+本教程介绍如何在Spring Boot中使用link:https://redis.io/[Redis]。Redis是一个开源的内存数据结构存储，可用作数据库，缓存和消息代理。本文将提供Spring Boot Redis的核心配置，帮助您更快了解和使用Redis。
+
+== 依赖配置
+[source,xml]
+----
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+----
+
+NOTE: 依赖的版本号应该由Spring Boot Pom提供。
+
+== Redis核心配置
+根据您的Redis实例情况选择以下3种配置方式之一。配置说明参考link:https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#application-properties.data.spring.redis.client-name[官方文档]
+
+TIP: 您也可参考源码，在开发时更加有效率，org.springframework.boot.autoconfigure.data.redis.RedisProperties
+
+=== Redis standalone模式
+
+一般在开发环境使用，生产环境不使用。 在application.properties中添加如下配置
+[source,properties]
+----
+spring.redis.client-type=lettuce
+spring.redis.host=
+spring.redis.port=
+spring.redis.username=
+spring.redis.password=
+----
+
+=== Redis sentinel模式
+在application.properties中添加如下配置
+[source,properties]
+----
+spring.redis.client-type=lettuce
+spring.redis.sentinel.master=
+# 格式 host1:port1,host2:port2
+# 填写的是sentinel的host和端口，而不是redis的
+spring.redis.sentinel.nodes=
+spring.redis.sentinel.password=
+----
+
+=== Redis cluster模式
+在application.properties中添加如下配置
+[source,properties]
+----
+spring.redis.client-type=lettuce
+# 格式 host1:port1,host2:port2
+# 至少填写一个
+spring.redis.cluster.nodes=
+spring.redis.username=
+spring.redis.password=
+----
+
+
+[TIP]
+====
+[%hardbreaks]
+相比jedis客户端，lettuce有更好的性能，如果您选择jedis客户端，配置spring.redis.client-type=jedis，此处不再展开介绍
+通常您不需要关心以下配置
+spring.redis.ssl 默认值false，一般内网不会使用ssl
+spring.redis.database 默认值0，尽量不要使用该值做分区处理，因为cluster模式不支持
+spring.redis.cluster.max-redirects 默认值5
+====
+
+== 说在最后
+受益于Spring Boot约定大于配置的思想，您只需要填写上述核心配置即可在 *生产环境* 获得优秀的性能表现。然而您仍然可能希望更精细化的配置，请参考link:http://xxx[高级配置]了解更多。
+

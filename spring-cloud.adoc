@@ -1,0 +1,5 @@
+---
+layout: cols
+title: Spring Cloud生产中的常用集成方案
+type: spring-cloud
+---

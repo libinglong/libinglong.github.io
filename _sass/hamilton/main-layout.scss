@@ -1,0 +1,105 @@
+.site-container {
+  position: relative;
+  width: 100vw;
+  top: $header-height;
+  bottom: 0;
+}
+
+.site-body {
+  display: flex;
+  padding-right: $spacing-unit;
+  padding-left: $spacing-unit;
+  justify-content: center;
+}
+
+.site-sidebar {
+  top: $spacing-unit;
+  padding: $spacing-unit;
+  border-right: 1px solid;
+  flex: 0 0 191px;
+  @include relative-font-size(0.8);
+
+  @include less-than($on-medium) {
+    padding: $spacing-unit / 2;
+    @include relative-font-size(0.6);
+  }
+
+  @include less-than($on-small) {
+    display: none;
+    border-right: none;
+    border-bottom: 1px solid;
+  }
+
+  @media screen and (min-width: $on-small) {
+    display: block !important;
+  }
+
+  a {
+    color: $header-background-color;
+  }
+  .social-icons {
+    color: $header-background-color;
+  }
+  .u-email {
+    color: $header-background-color;
+  }
+  .sidebar-icon {
+    color: $header-background-color;
+  }
+
+  font {
+    margin: auto;
+  }
+
+  .text-center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+  }
+}
+
+.site-main {
+  outline: none;
+  flex: 0 1 800px;
+  //覆盖min-width: auto，因为flex-basis受min-width和max-width限制
+  min-width: 0;
+  // Hide scrollbar for IE, Edge and Firefox
+  -ms-overflow-style: none;  // IE and Edge
+  scrollbar-width: none;     // Firefox
+
+  padding-left: $spacing-unit;
+  padding-right: $spacing-unit;
+
+}
+
+.site-toc{
+  flex: 0 0 300px;
+  top: $spacing-unit;
+  padding: $spacing-unit;
+}
+
+.site-footer {
+  margin-top: $spacing-unit * 2;
+  border-top: 1px solid;
+  padding: $spacing-unit 0;
+  @include relative-font-size(0.8);
+
+  p, ul {
+    margin-bottom: $spacing-unit / 4;
+  }
+}
+
+
+.fixed-toc {
+  //等于$header-height + $spacing-unit
+  top: 90px;
+  position: sticky;
+}
+
+.fixed-sidebar {
+  //等于$header-height + $spacing-unit
+  top: 90px;
+  position: sticky;
+}
+

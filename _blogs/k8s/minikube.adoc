@@ -1,0 +1,25 @@
+:page-layout: post
+:page-title: minikube
+:page-categories: blog
+include::../attributes.adoc[]
+== docker镜像的mirror配置
+
+. 国内启动的话，可以加上--image-mirror-country=cn启动参数,速度更快
++
+[source,shell]
+----
+minikube start --image-mirror-country=cn
+----
+
+. 代理配置
++
+参考link:https://minikube.sigs.k8s.io/docs/handbook/vpn_and_proxy/[vpn_and_proxy]
+
+== driver
+
+如果仅是在本机执行，通常driver使用docker，但此时部署的minikube节点ip是docker容器的ip，而不是host的ip，当我们node节点需要是host的ip的时候，可以使用--driver=none
+[source,shell]
+----
+minikube start --driver=none
+----
+而不是在--driver=docker时，使用--network=host。参考link:https://github.com/kubernetes/minikube/issues/10750[issues/10750]

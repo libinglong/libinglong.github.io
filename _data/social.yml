@@ -1,0 +1,20 @@
+# 微信公众号 微博 抖音 推特 github youtube
+# qq
+#- title: Weibo
+#  url: https://weibo.com/u/6377347727
+#  icon: fab fa-weibo
+- title: Douyin
+  url: https://v.douyin.com/LGmntoC
+  icon: fab fa-tiktok
+- title: Twitter
+  url: https://twitter.com/Jack58254585
+  icon: fab fa-twitter
+- title: GitHub
+  url: https://github.com/libinglong
+  icon: fab fa-github
+- title: Youtube
+  url: https://www.youtube.com/channel/UCXCxWAxBOO_-b0Kot-04LLQ
+  icon: fab fa-youtube
+- title: Telegram
+  url: https://t.me/laosiji_spring
+  icon: fab fa-telegram

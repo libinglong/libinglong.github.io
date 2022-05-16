@@ -1,0 +1,20 @@
+:icons: font
+:!version-label:
+:doctype: book
+:idprefix:
+:idseparator: -
+//:toc: left
+:toclevels: 4
+:tabsize: 4
+:numbered:
+:sectanchors:
+:sectnums:
+//这个默认可以调整小标题的层级，默认是3，层级最好不要太深，springboot文档也是选的默认值
+//:sectnumlevels: 5
+:hide-uri-scheme:
+:docinfo: shared,private
+:attribute-missing: warn
+:chomp: default headers packages
+:spring-boot-artifactory-repo: snapshot
+:github-tag: main
+:page-excerpt:

@@ -1,0 +1,51 @@
+@mixin less-than($device) {
+  @media screen and (max-width: $device) {
+    @content;
+  }
+}
+
+@mixin relative-font-size($ratio) {
+  font-size: #{$ratio}rem;
+}
+
+@mixin grid {
+  display: grid;
+  grid-template-columns: calc(#{$content-width} * 0.24) 1fr calc(#{$content-width} * 0.24);
+
+  @include less-than($on-medium) {
+    grid-template-columns: calc(#{$content-width} * 0.18) 1fr calc(#{$content-width} * 0.18);
+  }
+
+  @include less-than($on-small) {
+    display: block;
+  }
+}
+
+@mixin doc-margin {
+  margin-left: calc(#{$content-width} * 0.24);
+  margin-right: calc(#{$content-width} * 0.24);
+
+
+  @include less-than($on-medium) {
+    margin-left: calc(#{$content-width} * 0.18);
+    margin-right: calc(#{$content-width} * 0.18);
+  }
+
+  @include less-than($on-small) {
+    display: block;
+  }
+}
+
+@mixin width {
+  @media screen and (min-width: $on-large) {
+    width: $on-large;
+  }
+
+  @media screen and (min-width: $on-large / $very-large-percent) {
+    width: number_to_string_percent($very-large-percent);
+  }
+}
+
+@function number_to_string_percent($num){
+  @return unquote($num * 100 + "%");
+}

@@ -1,0 +1,53 @@
+title: 老司机
+description: 一个帮助开发人员探索java生态，并成为优秀工程师的网站
+author: 老司机
+avatar: /logo.png
+email: libinglong9@gmail.com
+skin: daylight
+
+url: "https://www.libinglong.tech"
+
+plugins:
+  - jekyll-seo-tag
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-paginate
+
+paginate: 10
+
+# Uncomment the below line and set the tracking ID for enabling Google Analytics
+# 
+google_analytics: G-CZ6MM7XT4X
+
+# Uncomment the below lines and set the Disqus shortname for enabling Disqus
+# 
+# disqus:
+
+# Jekyll
+# ======
+exclude:
+  - scripts/
+  - README.md
+  - jekyll-theme-hamilton.gemspec
+
+# Jekyll SEO Tag (Optional)
+# =========================
+twitter:
+  username: ngzhio
+  card: summary
+logo: logo.png
+
+
+lang: en
+asciidoc: {}
+asciidoctor:
+  base_dir: :docdir
+  safe: unsafe
+  attributes:
+    stem:
+
+collections:
+  articles:
+  blogs:
+    output: true
+

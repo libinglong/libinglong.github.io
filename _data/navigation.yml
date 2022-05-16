@@ -1,0 +1,22 @@
+#- title: Years
+#  url: /years/
+#- title: Categories
+#  url: /categories/
+#- title: Tags
+#  url: /tags/
+- title: Java
+  url: /java
+- title: SpringBoot
+  url: /spring-boot
+- title: SpringCloud
+  url: /spring-cloud
+- title: 博客
+  url: /blogs
+- title: 关于
+  url: /about
+#- title: More
+#  sublinks:
+#    - title: FAQ
+#      url: /faq/
+#    - title: Docs
+#      url: /docs/
