@@ -6,9 +6,9 @@
 - title: Douyin
   url: https://v.douyin.com/LGmntoC
   icon: fab fa-tiktok
-- title: Twitter
-  url: https://twitter.com/Jack58254585
-  icon: fab fa-twitter
+#- title: Twitter
+#  url: https://twitter.com/Jack58254585
+#  icon: fab fa-twitter
 - title: GitHub
   url: https://github.com/libinglong
   icon: fab fa-github
