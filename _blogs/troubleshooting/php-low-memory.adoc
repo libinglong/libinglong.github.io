@@ -3,7 +3,6 @@
 :page-categories: blog
 include::../attributes.adoc[]
 
-== 问题描述
 
 在集群中部署了一组php的服务，使用php7.2.11版本。然后在运行中出现了很诡异的现象。cpu在不同的pod中的占用率，很不均衡，如图。
 
