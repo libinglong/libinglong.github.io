@@ -16,7 +16,9 @@ include::../attributes.adoc[]
 [source,shell script]
 ====
 root@beike>/usr/local/matrix/sbin/tengine -v
+
 Tengine version: Tengine/2.3.2
+
 nginx version: nginx/1.17.3
 ====
 
