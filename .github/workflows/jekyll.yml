@@ -14,7 +14,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build the site in the jekyll/builder container
+    - with:
+        path: /tmp/abc
+        key: abc
       run: |
+        echo hello >/tmp/abc
         docker run \
         -v ${{ github.workspace }}:/srv/jekyll \
         jekyll/builder:latest /bin/bash -c "chmod -R 777 /srv/jekyll && bundle install && bundle exec jekyll build"
