@@ -24,6 +24,7 @@ jobs:
     
     - name: Build the site in the jekyll/builder container
       run: |
+        sleep 10000
         echo hello >/tmp/abc
         docker run \
         -v ${{ github.workspace }}:/srv/jekyll \
