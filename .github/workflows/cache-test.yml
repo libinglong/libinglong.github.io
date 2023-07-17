@@ -19,7 +19,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: |
-          /tmp/abc1
+          /tmp/abc
         key: abc  
     
     - name: test cache content
