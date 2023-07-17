@@ -19,13 +19,14 @@ jobs:
       uses: actions/cache@v3
       with:
         path: |
-          /tmp/def
+          /tmp/abc
         key: abc  
     
     - name: test cache content
       run: |
         cat /tmp/abc || true
-        echo hello >/tmp/def
+        cat /tmp/def || true
+        echo hello >/tmp/abc
         
         
 
