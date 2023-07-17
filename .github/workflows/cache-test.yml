@@ -25,6 +25,8 @@ jobs:
     - name: test cache content
       run: |
         pwd
+        cat abc || true
+        echo hello>abc
         whoami
         which cat
         cat /tmp/abc || true
