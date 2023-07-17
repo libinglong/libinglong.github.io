@@ -1,0 +1,32 @@
+name: Jekyll site CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    
+    - uses: actions/checkout@v2
+    
+    - name: Cache Gradle packages
+      uses: actions/cache@v3
+      with:
+        path: |
+          /tmp/abc
+        key: abc  
+    
+    - name: Build the site in the jekyll/builder container
+      run: |
+        cat /tmp/abc || true
+        echo hello >/tmp/abc
+        
+
+        
+        
