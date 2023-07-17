@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<!--minimum-scale=1保证在chrome浏览器中调试响应窗口时，拥有fixed position的block不会跟随scroll变化-->
+<meta name="viewport" content="width=device-width, initial-scale=1 minimum-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>php7.2.11在低内存节点性能低的问题分析 | 老司机</title>
+<meta name="generator" content="Jekyll v3.9.3" />
+<meta property="og:title" content="php7.2.11在低内存节点性能低的问题分析" />
+<meta name="author" content="老司机" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="一个帮助开发人员探索java生态，并成为优秀工程师的网站" />
+<meta property="og:description" content="一个帮助开发人员探索java生态，并成为优秀工程师的网站" />
+<link rel="canonical" href="https://www.libinglong.tech/blogs/troubleshooting/php-low-memory.html" />
+<meta property="og:url" content="https://www.libinglong.tech/blogs/troubleshooting/php-low-memory.html" />
+<meta property="og:site_name" content="老司机" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2023-07-17T09:53:59-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="php7.2.11在低内存节点性能低的问题分析" />
+<meta name="twitter:site" content="@ngzhio" />
+<meta name="twitter:creator" content="@老司机" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"老司机"},"dateModified":"2023-07-17T09:53:59-05:00","datePublished":"2023-07-17T09:53:59-05:00","description":"一个帮助开发人员探索java生态，并成为优秀工程师的网站","headline":"php7.2.11在低内存节点性能低的问题分析","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.libinglong.tech/blogs/troubleshooting/php-low-memory.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://www.libinglong.tech/logo.png"},"name":"老司机"},"url":"https://www.libinglong.tech/blogs/troubleshooting/php-low-memory.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+<link type="application/atom+xml" rel="alternate" href="https://www.libinglong.tech/feed.xml" title="老司机" />
+
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CZ6MM7XT4X"></script>
+<script>
+  window['ga-disable-G-CZ6MM7XT4X'] = window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1";
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-CZ6MM7XT4X');
+</script>
+
+
+
+
+
+
+<script async src="/assets/js/site.js"></script>
+<script async src="/assets/js/setup.js"></script>
+
+<!-- Google Fonts -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open%20Sans|Roboto|Roboto%20Slab|Inconsolata|Dancing%20Script|Noto%20Sans%20SC|Noto%20Sans%20TC|Noto%20Serif%20SC|Noto%20Serif%20TC|Ma%20Shan%20Zheng">
+
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="/assets/css/skin.css">
+
+<!-- Begin selecting skin -->
+
+<!-- End selecting skin -->
+
+
+
+
+
+  </head>
+
+  <body>
+    <header class="header-container">
+      <div class="site-header">
+  <script>
+    function clickSidebarButton() {
+      const elem = document.getElementById("site-sidebar")
+      if (elem.style.display === "none" || elem.style.display === "") {
+        elem.style.display = "block";
+      } else {
+        elem.style.display = "none";
+      }
+    }
+  </script>
+  <a class="site-sidebar-button" onclick="clickSidebarButton()"><i class="far fa-user"></i>
+  </a>
+  <div class="site-title">
+    <a  rel="author" href="/">老司机</a>
+  </div>
+
+  
+  <nav class="site-nav">
+    <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+    <label for="nav-trigger" title="nav-trigger">
+        <span class="menu-icon">
+          <svg viewBox="0 0 18 15" width="18px" height="15px">
+            <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+          </svg>
+        </span>
+    </label>
+
+    <ul class="trigger">
+      <li><a class="" href="/java">Java</a></li>
+      
+      <li><a class="" href="/spring-boot">SpringBoot</a></li>
+      
+      <li><a class="" href="/spring-cloud">SpringCloud</a></li>
+      
+      <li><a class="" href="/blogs">博客</a></li>
+      
+      <li><a class="" href="/about">关于</a></li>
+      </ul>
+  </nav>
+  
+</div>
+
+    </header>
+    <div id="tocbar" style="display: none">
+      <button id="toggle-toc"></button>
+    </div>
+    <div class="site-container">
+      <div class="site-body">
+        <aside class="site-sidebar" id="site-sidebar">
+          <div class="fixed-sidebar">
+            
+            <div class="sidebar-section"><img src="/logo.png" class="author-avatar u-photo align-center" alt="老司机">
+  </div>
+
+<div class="sidebar-section">
+  <ul class="contact-list">
+    <li>
+        <i class="sidebar-icon fas fa-envelope"></i>
+        <a class="contact-info u-email" href="mailto:libinglong9@gmail.com">libinglong9@gmail.com</a>
+      </li>
+    
+  </ul>
+</div>
+
+<div class="sidebar-section feed-subscribe">
+  <a href="/feed.xml">
+    <i class="sidebar-icon fas fa-rss"></i><span>Subscribe</span>
+  </a>
+</div>
+
+<div class="sidebar-section">
+    <ul class="social-icons">
+      <li>
+          <a class="social-icon" href="https://v.douyin.com/LGmntoC"><i class="fab fa-tiktok fa-2x" title="Douyin"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://github.com/libinglong"><i class="fab fa-github fa-2x" title="GitHub"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://www.youtube.com/channel/UCXCxWAxBOO_-b0Kot-04LLQ"><i class="fab fa-youtube fa-2x" title="Youtube"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://t.me/laosiji_spring"><i class="fab fa-telegram fa-2x" title="Telegram"></i></a>
+        </li>
+    </ul>
+  </div>
+<a class="qq-link" target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=gZ9BYnnw9Ud7u3wjUq18A7EcIzTbVFVh&jump_from=webapi"><img border="0" src="//pub.idqqimg.com/wpa/images/group.png" alt="老司机" title="老司机"></a>
+<div>
+  <img src="/assets/img/weixin.jpg"/>
+  <span class="text-center">微信</span>
+</div>
+
+            
+          </div>
+        </aside>
+        <main class="site-main" id="content" aria-label="Content" tabindex="1">
+          <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+
+    <h1 class="post-title p-name" itemprop="name headline">php7.2.11在低内存节点性能低的问题分析</h1>
+    <p class="post-meta"><!--      <time class="dt-published" datetime="" itemprop="datePublished">-->
+<!--        -->
+<!--      </time>--></p>
+
+  </header>
+
+  <div class="post-content e-content doc" itemprop="articleBody">
+    <div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>在集群中部署了一组php的服务，使用php7.2.11版本。然后在运行中出现了很诡异的现象。cpu在不同的pod中的占用率，很不均衡，如图。</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../images/企业微信截图_1664503300501.png" alt="企业微信截图 1664503300501">
+</div>
+</div>
+<div class="paragraph">
+<p>这导致业务方接口出现大量http code 499问题。经过一番排查，我们确定，流量无论从7层网关日志看，还是从节点accesslog日志看，都是均衡的。这就更加奇怪了。因此怀疑是宿主机节点的差异导致的。宿主机节点cpu占用在20-30%，但是内存占用较高。因此初步怀疑是内存占用高的情况才出现。但是即使同样是80%内存占用的节点，也并不都有这样的问题。因此排查方向非常不明朗。</p>
+</div>
+<div class="paragraph">
+<p>国庆节前，事情出现了转机，有业务方的服务，在某个节点上能稳定复现这样的情况，因此我决定，在国庆节期间，重点攻克这个问题(请原谅我这么卷，因为平时这个问题真的不容易稳定复现，节点上服务多，影响多，机不可失)。</p>
+</div>
+<div class="paragraph">
+<p>尝试了一些性能分析工具，最后通过strace工具，让真正的问题浮出水面。strace -T -tt -e trace=all -p27639 -o output.txt,截取报文如下：</p>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div class="paragraph">
+<p>10:53:01.519610 madvise(0x7f4349000000, 134221824, MADV_HUGEPAGE) = 0 &lt;0.000008&gt;
+10:53:28.714302 munmap(0x7f436a800000, 67112960) = 0 &lt;0.003810&gt;</p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>可以看到madvise命令占用了大量的时间，通过google，发现了一个<a href="https://bugs.php.net/bug.php?id=77622">php的bug报告</a>。</p>
+</div>
+<div class="paragraph">
+<p>报告中指出MADV_HUGEPAGE在低内存时对性能有很大的影响，并在后续的版本中默认禁用。通过查看commit记录，最早于7.2.16版本默认禁用，因此，升级php可解决此问题。</p>
+</div>
+<div class="paragraph">
+<p>在排查此问题的过程中，还发现了其他诡异的问题：</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>wrk压测忽然停止，但命令没有任何报错，只是hang住</p>
+</li>
+<li>
+<p>ab压测，长连接为何不生效</p>
+</li>
+<li>
+<p>压测时为何总有一个节点cpu占用到100%，其他节点占用却在50-70%</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>这些问题的原因是什么，请参见<a href="strange-stress">压测下的诡异现象</a></p>
+</div>
+<div class="paragraph">
+<p>排查过程其实很曲折，总耗时2天&#8230;&#8203;</p>
+</div>
+</div>
+</div>
+  </div>
+
+  <footer class="post-footer">
+    <nav class="post-pagination" role="navigation">
+      
+        <a class="post-previous" href="/blogs/troubleshooting/performance/al2.html">
+          <h4 class="post-pagination-label">Prev</h4>
+          <i class="fas fa-arrow-left"></i>
+          <span class="post-pagination-title">
+            史诗级java低时延调优案例2
+
+          </span>
+        </a>
+      
+
+      
+        <a class="post-next" href="/blogs/troubleshooting/strange-stress.html">
+          <h4 class="post-pagination-label">Next</h4>
+          <span class="post-pagination-title">
+            压测下的诡异现象
+
+          </span>
+          <i class="fas fa-arrow-right"></i>
+        </a>
+      
+    </nav>
+  </footer>
+
+  
+  
+</article>
+
+          <footer class="site-footer">
+            <div class="footer-col-wrapper">
+
+  <div class="footer-col">
+    <div class="copyright">
+      
+      
+      
+      
+      <p>Copyright ©  老司机; All rights reserved.</p>
+      
+    </div>
+    <p>
+      Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/ngzhio/jekyll-theme-hamilton">Hamilton</a>
+    </p>
+  </div>
+
+  <div class="footer-col">
+    <p>一个帮助开发人员探索java生态，并成为优秀工程师的网站</p>
+  </div>
+  <a href="https://beian.miit.gov.cn/" target="_blank">京ICP备2022003804号-1</a>
+</div>
+
+          </footer>
+        </main>
+        <div class="site-toc">
+          <div id="toc" class="fixed-toc"></div>
+        </div>
+      </div>
+    </div>
+  </body>
+
+</html>

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<!--minimum-scale=1保证在chrome浏览器中调试响应窗口时，拥有fixed position的block不会跟随scroll变化-->
+<meta name="viewport" content="width=device-width, initial-scale=1 minimum-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Spring Boot集成Redis | 老司机</title>
+<meta name="generator" content="Jekyll v3.9.3" />
+<meta property="og:title" content="Spring Boot集成Redis" />
+<meta name="author" content="老司机" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="一个帮助开发人员探索java生态，并成为优秀工程师的网站" />
+<meta property="og:description" content="一个帮助开发人员探索java生态，并成为优秀工程师的网站" />
+<link rel="canonical" href="https://www.libinglong.tech/blogs/springboot/spring-boot-redis.html" />
+<meta property="og:url" content="https://www.libinglong.tech/blogs/springboot/spring-boot-redis.html" />
+<meta property="og:site_name" content="老司机" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2023-07-17T09:53:59-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Spring Boot集成Redis" />
+<meta name="twitter:site" content="@ngzhio" />
+<meta name="twitter:creator" content="@老司机" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"老司机"},"dateModified":"2023-07-17T09:53:59-05:00","datePublished":"2023-07-17T09:53:59-05:00","description":"一个帮助开发人员探索java生态，并成为优秀工程师的网站","headline":"Spring Boot集成Redis","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.libinglong.tech/blogs/springboot/spring-boot-redis.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://www.libinglong.tech/logo.png"},"name":"老司机"},"url":"https://www.libinglong.tech/blogs/springboot/spring-boot-redis.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+<link type="application/atom+xml" rel="alternate" href="https://www.libinglong.tech/feed.xml" title="老司机" />
+
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CZ6MM7XT4X"></script>
+<script>
+  window['ga-disable-G-CZ6MM7XT4X'] = window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1";
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-CZ6MM7XT4X');
+</script>
+
+
+
+
+
+
+<script async src="/assets/js/site.js"></script>
+<script async src="/assets/js/setup.js"></script>
+
+<!-- Google Fonts -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open%20Sans|Roboto|Roboto%20Slab|Inconsolata|Dancing%20Script|Noto%20Sans%20SC|Noto%20Sans%20TC|Noto%20Serif%20SC|Noto%20Serif%20TC|Ma%20Shan%20Zheng">
+
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="/assets/css/skin.css">
+
+<!-- Begin selecting skin -->
+
+<!-- End selecting skin -->
+
+
+
+
+
+  </head>
+
+  <body>
+    <header class="header-container">
+      <div class="site-header">
+  <script>
+    function clickSidebarButton() {
+      const elem = document.getElementById("site-sidebar")
+      if (elem.style.display === "none" || elem.style.display === "") {
+        elem.style.display = "block";
+      } else {
+        elem.style.display = "none";
+      }
+    }
+  </script>
+  <a class="site-sidebar-button" onclick="clickSidebarButton()"><i class="far fa-user"></i>
+  </a>
+  <div class="site-title">
+    <a  rel="author" href="/">老司机</a>
+  </div>
+
+  
+  <nav class="site-nav">
+    <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+    <label for="nav-trigger" title="nav-trigger">
+        <span class="menu-icon">
+          <svg viewBox="0 0 18 15" width="18px" height="15px">
+            <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+          </svg>
+        </span>
+    </label>
+
+    <ul class="trigger">
+      <li><a class="" href="/java">Java</a></li>
+      
+      <li><a class="" href="/spring-boot">SpringBoot</a></li>
+      
+      <li><a class="" href="/spring-cloud">SpringCloud</a></li>
+      
+      <li><a class="" href="/blogs">博客</a></li>
+      
+      <li><a class="" href="/about">关于</a></li>
+      </ul>
+  </nav>
+  
+</div>
+
+    </header>
+    <div id="tocbar" style="display: none">
+      <button id="toggle-toc"></button>
+    </div>
+    <div class="site-container">
+      <div class="site-body">
+        <aside class="site-sidebar" id="site-sidebar">
+          <div class="fixed-sidebar">
+            
+            <div class="sidebar-section"><img src="/logo.png" class="author-avatar u-photo align-center" alt="老司机">
+  </div>
+
+<div class="sidebar-section">
+  <ul class="contact-list">
+    <li>
+        <i class="sidebar-icon fas fa-envelope"></i>
+        <a class="contact-info u-email" href="mailto:libinglong9@gmail.com">libinglong9@gmail.com</a>
+      </li>
+    
+  </ul>
+</div>
+
+<div class="sidebar-section feed-subscribe">
+  <a href="/feed.xml">
+    <i class="sidebar-icon fas fa-rss"></i><span>Subscribe</span>
+  </a>
+</div>
+
+<div class="sidebar-section">
+    <ul class="social-icons">
+      <li>
+          <a class="social-icon" href="https://v.douyin.com/LGmntoC"><i class="fab fa-tiktok fa-2x" title="Douyin"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://github.com/libinglong"><i class="fab fa-github fa-2x" title="GitHub"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://www.youtube.com/channel/UCXCxWAxBOO_-b0Kot-04LLQ"><i class="fab fa-youtube fa-2x" title="Youtube"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://t.me/laosiji_spring"><i class="fab fa-telegram fa-2x" title="Telegram"></i></a>
+        </li>
+    </ul>
+  </div>
+<a class="qq-link" target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=gZ9BYnnw9Ud7u3wjUq18A7EcIzTbVFVh&jump_from=webapi"><img border="0" src="//pub.idqqimg.com/wpa/images/group.png" alt="老司机" title="老司机"></a>
+<div>
+  <img src="/assets/img/weixin.jpg"/>
+  <span class="text-center">微信</span>
+</div>
+
+            
+          </div>
+        </aside>
+        <main class="site-main" id="content" aria-label="Content" tabindex="1">
+          <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+
+    <h1 class="post-title p-name" itemprop="name headline">Spring Boot集成Redis</h1>
+    <p class="post-meta"><!--      <time class="dt-published" datetime="" itemprop="datePublished">-->
+<!--        -->
+<!--      </time>--></p>
+
+  </header>
+
+  <div class="post-content e-content doc" itemprop="articleBody">
+    <div class="sect1">
+<h2 id="概览"><a class="anchor" href="#概览"></a>1. 概览</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>本教程介绍如何在Spring Boot中使用<a href="https://redis.io/">Redis</a>。Redis是一个开源的内存数据结构存储，可用作数据库，缓存和消息代理。本文将提供Spring Boot Redis的核心配置，帮助您更快了解和使用Redis。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="依赖配置"><a class="anchor" href="#依赖配置"></a>2. 依赖配置</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-xml" data-lang="xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-data-redis&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+依赖的版本号应该由Spring Boot Pom提供。
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="redis核心配置"><a class="anchor" href="#redis核心配置"></a>3. Redis核心配置</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>根据您的Redis实例情况选择以下3种配置方式之一。配置说明参考<a href="https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#application-properties.data.spring.redis.client-name">官方文档</a></p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+您也可参考源码，在开发时更加有效率，org.springframework.boot.autoconfigure.data.redis.RedisProperties
+</td>
+</tr>
+</table>
+</div>
+<div class="sect2">
+<h3 id="redis-standalone模式"><a class="anchor" href="#redis-standalone模式"></a>3.1. Redis standalone模式</h3>
+<div class="paragraph">
+<p>一般在开发环境使用，生产环境不使用。 在application.properties中添加如下配置</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-properties" data-lang="properties">spring.redis.client-type=lettuce
+spring.redis.host=
+spring.redis.port=
+spring.redis.username=
+spring.redis.password=</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="redis-sentinel模式"><a class="anchor" href="#redis-sentinel模式"></a>3.2. Redis sentinel模式</h3>
+<div class="paragraph">
+<p>在application.properties中添加如下配置</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-properties" data-lang="properties">spring.redis.client-type=lettuce
+spring.redis.sentinel.master=
+# 格式 host1:port1,host2:port2
+# 填写的是sentinel的host和端口，而不是redis的
+spring.redis.sentinel.nodes=
+spring.redis.sentinel.password=</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="redis-cluster模式"><a class="anchor" href="#redis-cluster模式"></a>3.3. Redis cluster模式</h3>
+<div class="paragraph">
+<p>在application.properties中添加如下配置</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-properties" data-lang="properties">spring.redis.client-type=lettuce
+# 格式 host1:port1,host2:port2
+# 至少填写一个
+spring.redis.cluster.nodes=
+spring.redis.username=
+spring.redis.password=</code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>相比jedis客户端，lettuce有更好的性能，如果您选择jedis客户端，配置spring.redis.client-type=jedis，此处不再展开介绍<br>
+通常您不需要关心以下配置<br>
+spring.redis.ssl 默认值false，一般内网不会使用ssl<br>
+spring.redis.database 默认值0，尽量不要使用该值做分区处理，因为cluster模式不支持<br>
+spring.redis.cluster.max-redirects 默认值5</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="说在最后"><a class="anchor" href="#说在最后"></a>4. 说在最后</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>受益于Spring Boot约定大于配置的思想，您只需要填写上述核心配置即可在 <strong>生产环境</strong> 获得优秀的性能表现。然而您仍然可能希望更精细化的配置，请参考<a href="http://xxx">高级配置</a>了解更多。</p>
+</div>
+</div>
+</div>
+  </div>
+
+  <footer class="post-footer">
+    <nav class="post-pagination" role="navigation">
+      
+        <a class="post-previous" href="/blogs/k8s/minikube.html">
+          <h4 class="post-pagination-label">Prev</h4>
+          <i class="fas fa-arrow-left"></i>
+          <span class="post-pagination-title">
+            minikube
+
+          </span>
+        </a>
+      
+
+      
+        <a class="post-next" href="/blogs/tools/git/git-merge.html">
+          <h4 class="post-pagination-label">Next</h4>
+          <span class="post-pagination-title">
+            为什么使用rebase而不是merge进行分支合并
+
+          </span>
+          <i class="fas fa-arrow-right"></i>
+        </a>
+      
+    </nav>
+  </footer>
+
+  
+  
+</article>
+
+          <footer class="site-footer">
+            <div class="footer-col-wrapper">
+
+  <div class="footer-col">
+    <div class="copyright">
+      
+      
+      
+      
+      <p>Copyright ©  老司机; All rights reserved.</p>
+      
+    </div>
+    <p>
+      Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/ngzhio/jekyll-theme-hamilton">Hamilton</a>
+    </p>
+  </div>
+
+  <div class="footer-col">
+    <p>一个帮助开发人员探索java生态，并成为优秀工程师的网站</p>
+  </div>
+  <a href="https://beian.miit.gov.cn/" target="_blank">京ICP备2022003804号-1</a>
+</div>
+
+          </footer>
+        </main>
+        <div class="site-toc">
+          <div id="toc" class="fixed-toc"><ul class="sectlevel1">
+<li><a href="#概览">1. 概览</a></li>
+<li><a href="#依赖配置">2. 依赖配置</a></li>
+<li><a href="#redis核心配置">3. Redis核心配置</a>
+<ul class="sectlevel2">
+<li><a href="#redis-standalone模式">3.1. Redis standalone模式</a></li>
+<li><a href="#redis-sentinel模式">3.2. Redis sentinel模式</a></li>
+<li><a href="#redis-cluster模式">3.3. Redis cluster模式</a></li>
+</ul>
+</li>
+<li><a href="#说在最后">4. 说在最后</a></li>
+</ul></div>
+        </div>
+      </div>
+    </div>
+  </body>
+
+</html>

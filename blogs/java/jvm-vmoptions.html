@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<!--minimum-scale=1保证在chrome浏览器中调试响应窗口时，拥有fixed position的block不会跟随scroll变化-->
+<meta name="viewport" content="width=device-width, initial-scale=1 minimum-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>JDK8u/11/17垃圾回收器、常用JVM参数详解 | 老司机</title>
+<meta name="generator" content="Jekyll v3.9.3" />
+<meta property="og:title" content="JDK8u/11/17垃圾回收器、常用JVM参数详解" />
+<meta name="author" content="老司机" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="一个帮助开发人员探索java生态，并成为优秀工程师的网站" />
+<meta property="og:description" content="一个帮助开发人员探索java生态，并成为优秀工程师的网站" />
+<link rel="canonical" href="https://www.libinglong.tech/blogs/java/jvm-vmoptions.html" />
+<meta property="og:url" content="https://www.libinglong.tech/blogs/java/jvm-vmoptions.html" />
+<meta property="og:site_name" content="老司机" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2023-07-17T09:53:59-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="JDK8u/11/17垃圾回收器、常用JVM参数详解" />
+<meta name="twitter:site" content="@ngzhio" />
+<meta name="twitter:creator" content="@老司机" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"老司机"},"dateModified":"2023-07-17T09:53:59-05:00","datePublished":"2023-07-17T09:53:59-05:00","description":"一个帮助开发人员探索java生态，并成为优秀工程师的网站","headline":"JDK8u/11/17垃圾回收器、常用JVM参数详解","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.libinglong.tech/blogs/java/jvm-vmoptions.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://www.libinglong.tech/logo.png"},"name":"老司机"},"url":"https://www.libinglong.tech/blogs/java/jvm-vmoptions.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+<link type="application/atom+xml" rel="alternate" href="https://www.libinglong.tech/feed.xml" title="老司机" />
+
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CZ6MM7XT4X"></script>
+<script>
+  window['ga-disable-G-CZ6MM7XT4X'] = window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1";
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-CZ6MM7XT4X');
+</script>
+
+
+
+
+
+
+<script async src="/assets/js/site.js"></script>
+<script async src="/assets/js/setup.js"></script>
+
+<!-- Google Fonts -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open%20Sans|Roboto|Roboto%20Slab|Inconsolata|Dancing%20Script|Noto%20Sans%20SC|Noto%20Sans%20TC|Noto%20Serif%20SC|Noto%20Serif%20TC|Ma%20Shan%20Zheng">
+
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="/assets/css/skin.css">
+
+<!-- Begin selecting skin -->
+
+<!-- End selecting skin -->
+
+
+
+
+
+  </head>
+
+  <body>
+    <header class="header-container">
+      <div class="site-header">
+  <script>
+    function clickSidebarButton() {
+      const elem = document.getElementById("site-sidebar")
+      if (elem.style.display === "none" || elem.style.display === "") {
+        elem.style.display = "block";
+      } else {
+        elem.style.display = "none";
+      }
+    }
+  </script>
+  <a class="site-sidebar-button" onclick="clickSidebarButton()"><i class="far fa-user"></i>
+  </a>
+  <div class="site-title">
+    <a  rel="author" href="/">老司机</a>
+  </div>
+
+  
+  <nav class="site-nav">
+    <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+    <label for="nav-trigger" title="nav-trigger">
+        <span class="menu-icon">
+          <svg viewBox="0 0 18 15" width="18px" height="15px">
+            <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+          </svg>
+        </span>
+    </label>
+
+    <ul class="trigger">
+      <li><a class="" href="/java">Java</a></li>
+      
+      <li><a class="" href="/spring-boot">SpringBoot</a></li>
+      
+      <li><a class="" href="/spring-cloud">SpringCloud</a></li>
+      
+      <li><a class="" href="/blogs">博客</a></li>
+      
+      <li><a class="" href="/about">关于</a></li>
+      </ul>
+  </nav>
+  
+</div>
+
+    </header>
+    <div id="tocbar" style="display: none">
+      <button id="toggle-toc"></button>
+    </div>
+    <div class="site-container">
+      <div class="site-body">
+        <aside class="site-sidebar" id="site-sidebar">
+          <div class="fixed-sidebar">
+            
+            <div class="sidebar-section"><img src="/logo.png" class="author-avatar u-photo align-center" alt="老司机">
+  </div>
+
+<div class="sidebar-section">
+  <ul class="contact-list">
+    <li>
+        <i class="sidebar-icon fas fa-envelope"></i>
+        <a class="contact-info u-email" href="mailto:libinglong9@gmail.com">libinglong9@gmail.com</a>
+      </li>
+    
+  </ul>
+</div>
+
+<div class="sidebar-section feed-subscribe">
+  <a href="/feed.xml">
+    <i class="sidebar-icon fas fa-rss"></i><span>Subscribe</span>
+  </a>
+</div>
+
+<div class="sidebar-section">
+    <ul class="social-icons">
+      <li>
+          <a class="social-icon" href="https://v.douyin.com/LGmntoC"><i class="fab fa-tiktok fa-2x" title="Douyin"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://github.com/libinglong"><i class="fab fa-github fa-2x" title="GitHub"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://www.youtube.com/channel/UCXCxWAxBOO_-b0Kot-04LLQ"><i class="fab fa-youtube fa-2x" title="Youtube"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://t.me/laosiji_spring"><i class="fab fa-telegram fa-2x" title="Telegram"></i></a>
+        </li>
+    </ul>
+  </div>
+<a class="qq-link" target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=gZ9BYnnw9Ud7u3wjUq18A7EcIzTbVFVh&jump_from=webapi"><img border="0" src="//pub.idqqimg.com/wpa/images/group.png" alt="老司机" title="老司机"></a>
+<div>
+  <img src="/assets/img/weixin.jpg"/>
+  <span class="text-center">微信</span>
+</div>
+
+            
+          </div>
+        </aside>
+        <main class="site-main" id="content" aria-label="Content" tabindex="1">
+          <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+
+    <h1 class="post-title p-name" itemprop="name headline">JDK8u/11/17垃圾回收器、常用JVM参数详解</h1>
+    <p class="post-meta"><!--      <time class="dt-published" datetime="" itemprop="datePublished">-->
+<!--        -->
+<!--      </time>--></p>
+
+  </header>
+
+  <div class="post-content e-content doc" itemprop="articleBody">
+    <div class="sect1">
+<h2 id="简介"><a class="anchor" href="#简介"></a>1. 简介</h2>
+<div class="sectionbody">
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+本文参数解释基本都是直接来源于官方文档，部分官方文档解释较为模糊的，加入了自己的说明。
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Java LTS(Long Term Support) 包括JDK8/11/17,本文只讨论三个长期支持版本</p>
+</div>
+<div class="paragraph">
+<p><a href="https://www.oracle.com/java/technologies/java-se-support-roadmap.html">Java LTS</a></p>
+</div>
+<div class="paragraph">
+<p><a href="https://docs.oracle.com/javase/8/docs/technotes/tools/unix/java.html#BABDJJFI">JDK8  java command for unix</a></p>
+</div>
+<div class="paragraph">
+<p><a href="https://docs.oracle.com/en/java/javase/11/tools/java.html#GUID-3B1CE181-CD30-4178-9602-230B800D4FAE">JDK11 java command</a></p>
+</div>
+<div class="paragraph">
+<p><a href="https://docs.oracle.com/en/java/javase/17/docs/specs/man/java.html">JDK17 java command</a></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="垃圾回收器"><a class="anchor" href="#垃圾回收器"></a>2. 垃圾回收器</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>我们只讨论jdk8和jdk11文档中提到的回收器，除此以外的回收器组合方式，将不在此讨论</p>
+</div>
+<div class="paragraph">
+<p><a href="https://docs.oracle.com/javase/8/docs/technotes/guides/vm/gctuning/collectors.html#sthref27">JDK8回收器</a></p>
+</div>
+<div class="paragraph">
+<p><a href="https://docs.oracle.com/en/java/javase/11/gctuning/available-collectors.html#GUID-414C9D95-297E-4EE3-B0D9-36F158A83393">JDK11回收器</a></p>
+</div>
+<div class="sect2">
+<h3 id="serial-collector"><a class="anchor" href="#serial-collector"></a>2.1. Serial Collector</h3>
+<div class="paragraph">
+<p>在JDK8/11/17中可用</p>
+</div>
+<div class="paragraph">
+<p>单线程回收器，在小内存100MB的应用中很有用，使用-XX:+UseSerialGC启用</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="parallel-collector"><a class="anchor" href="#parallel-collector"></a>2.2. Parallel Collector</h3>
+<div class="paragraph">
+<p>在JDK8/11/17中可用，是JDK8的默认收齐器</p>
+</div>
+<div class="paragraph">
+<p>提供更高的吞吐量，适用于中大型数据的在多处理器运行的应用程序，使用-XX:+UseParallelGC启用。当启用该回收器时，老年代的回收默认也是并行回收的，但可以通过使用-XX:-UseParallelOldGC禁用掉。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="concurrent-mark-sweep-cms-collector"><a class="anchor" href="#concurrent-mark-sweep-cms-collector"></a>2.3. Concurrent Mark Sweep (CMS) Collector</h3>
+<div class="paragraph">
+<p>在JDK8/11中可用，CMS在JDK9中就已经标记为弃用，因此不建议在JDK11中使用</p>
+</div>
+<div class="paragraph">
+<p>适用于大中型数据的应用程序，但相比Parallel Collector提供更低的延迟，通过-XX:+UseConcMarkSweepGC启用</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="garbage-first-garbage-collector"><a class="anchor" href="#garbage-first-garbage-collector"></a>2.4. Garbage-First Garbage Collector</h3>
+<div class="paragraph">
+<p>在JDK8/11/17中可用，JDK11中多数系统默认使用G1回收器</p>
+</div>
+<div class="paragraph">
+<p>适用于大中型以及超大数据的应用程序，但相比Parallel Collector提供更低的延迟，通过-XX:+UseG1GC启用</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+对于超大型内存的应用，如果想获得较低的gc停顿，G1是首选，因为G1的young gc可以是部分回收，而CMS每次都回收整个年轻代
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="z-garbage-collector"><a class="anchor" href="#z-garbage-collector"></a>2.5. Z Garbage Collector</h3>
+<div class="paragraph">
+<p>JDK11实验特性/17中可用</p>
+</div>
+<div class="paragraph">
+<p>可扩展低延迟垃圾收集器，并发执行所有昂贵的工作，且不会停止应用线程的运行。适用于低延迟(小于10ms)或者非常大的堆(数TB)的应用程序，通过使用-XX:+UseZGC启用</p>
+</div>
+<div class="paragraph">
+<p>ZGC作为实验特性，从JDK11开始。如果延迟具有非常高的优先级，或者堆非常大，可以使用ZGC</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+以下提到的vm参数，如无特别说明，在JDK8/11/17中均可用，另外，所有参数说明来自于oracle官方文档。我在Openjdk官网并没有找到java command相关文档.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="gc配置"><a class="anchor" href="#gc配置"></a>3. gc配置</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="内存配置"><a class="anchor" href="#内存配置"></a>3.1. 内存配置</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>-Xmn
++ 设置年轻代的初始和最大值。k/K表示kilobytes，m/M表示megabytes, g/G表示gigabytes。</p>
+<div class="paragraph">
+<p>比如256MB的多种表示<br>
+-Xmn256m<br>
+-Xmn262144k<br>
+-Xmn268435456<br>
+也可以使用-XX:NewSize设置初始值，-XX:MaxNewSize设置最大值</p>
+</div>
+</li>
+<li>
+<p>-Xms</p>
+<div class="paragraph">
+<p>设置heap的最小值和初始值，该值必须是1024倍数，且大于1MB。k/K表示kilobytes，m/M表示megabytes, g/G表示gigabytes。
+比如6MB的多种表示
+-Xms6291456
+-Xms6144k
+-Xms6m
+如果不设置此参数，则其值为初始年轻代大小和老年代的和。如果-XX:InitalHeapSize出现在-Xms后面，则初始值被-XX:InitalHeapSize覆盖。</p>
+</div>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+官方文档中说不设置此参数，其值为初始年轻代大小和老年代的和，可是这个时候老年代大小是通过什么指定的呢？
+</td>
+</tr>
+</table>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>-Xmx</p>
+<div class="paragraph">
+<p>设置堆的最大值。该值必须是1024倍数且大于2MB。<br>
+例如80MB<br>
+-Xmx83886080<br>
+-Xmx81920k<br>
+-Xmx80m<br>
+等价于-XX:MaxHeapSize。</p>
+</div>
+</li>
+<li>
+<p>-Xss</p>
+<div class="paragraph">
+<p>设置线程栈的大小 k/K表示kilobytes，m/M表示megabytes,g/G表示gigabytes。平台默认值：<br>
+Linux/ARM (32-bit): 320 KB<br>
+Linux/i386 (32-bit): 320 KB<br>
+Linux/x64 (64-bit): 1024 KB<br>
+OS X (64-bit): 1024 KB<br>
+Oracle Solaris/i386 (32-bit): 320 KB<br>
+Oracle Solaris/x64 (64-bit): 1024 KB<br>
+比如1024KB的多种表示：<br>
+-Xss1m<br>
+-Xss1024k<br>
+-Xss1048576<br>
+该参数等价于-XX:ThreadStackSize</p>
+</div>
+</li>
+<li>
+<p>-XX:InitialHeapSize=size 略</p>
+</li>
+<li>
+<p>-XX:InitialRAMPercentage=percent</p>
+<div class="paragraph">
+<p>JVM可以使用的初始RAM占宿主机的百分比，例如5%<br>
+-XX:InitialRAMPercentage=5</p>
+</div>
+</li>
+<li>
+<p>-XX:MinRAMPercentage=percent</p>
+<div class="paragraph">
+<p>JVM最小可以使用的初始RAM占宿主机的百分比</p>
+</div>
+</li>
+<li>
+<p>-XX:MaxRAMPercentage=percent</p>
+<div class="paragraph">
+<p>JVM最大可以使用的初始RAM占宿主机的百分比</p>
+</div>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+部分平台必须写成小数-XX:InitialRAMPercentage=5.0
+</td>
+</tr>
+</table>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>-XX:NewRatio=ratio</p>
+<div class="paragraph">
+<p>经验证是老年代/年轻代的比值，年轻代是分母</p>
+</div>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+令人困惑的是，官方文档写的是young/old radio，是英语表达分母的方式不同吗？？
+</td>
+</tr>
+</table>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>-XX:InitialSurvivorRatio=ratio</p>
+<div class="paragraph">
+<p>初始存活区比例，用于ParallelGC</p>
+</div>
+</li>
+<li>
+<p>-XX:SurvivorRatio</p>
+<div class="paragraph">
+<p>存活区比例</p>
+</div>
+</li>
+<li>
+<p>-XX:MaxHeapSize=size 略</p>
+</li>
+<li>
+<p>-XX:MetaspaceSize=size -XX:MaxMetaspaceSize=size</p>
+<div class="paragraph">
+<p>元数据占用内存设置</p>
+</div>
+<div class="paragraph">
+<p>例子<br>
+-XX:MaxMetaspaceSize=256m</p>
+</div>
+</li>
+<li>
+<p>-XX:SurvivorRatio=ratio</p>
+<div class="paragraph">
+<p>eden/survivor比值</p>
+</div>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+survivor有两个，因此假设heap为100M,-XX:SurvivorRatio=8,则eden为80m，两个survivor各占10m
+</td>
+</tr>
+</table>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>-XX:TargetSurvivorRatio=ratio</p>
+<div class="paragraph">
+<p>例如-XX:TargetSurvivorRatio=80表示：<br>
+Survivor区从年龄为1到n的对象如果超过了80%，那么年龄阈值动态调整为n</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="其他配置"><a class="anchor" href="#其他配置"></a>3.2. 其他配置</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>-XX:MaxGCPauseMillis=time</p>
+<div class="paragraph">
+<p>目标gc停顿时间。虽然官方文档未提及，但该参数应该只用于G1</p>
+</div>
+</li>
+<li>
+<p>-XX:MaxTenuringThreshold=threshold</p>
+<div class="paragraph">
+<p>年龄阈值，超过此年龄的对象晋升到老年代</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="日志"><a class="anchor" href="#日志"></a>3.3. 日志</h3>
+<div class="paragraph">
+<p>见<a href="#gc日志">gc日志</a></p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="jvm日志"><a class="anchor" href="#jvm日志"></a>4. jvm日志</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="gc日志"><a class="anchor" href="#gc日志"></a>4.1. gc日志</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>-verbose:gc</p>
+<div class="paragraph">
+<p>显示gc事件的信息</p>
+</div>
+</li>
+<li>
+<p>-Xloggc:filename</p>
+<div class="paragraph">
+<p>JDK8可用，JDK11/17弃用<br>
+设置日志事件输出的文件，输出信息和-verbose:gc相似，该参数会覆盖-verbose:gc</p>
+</div>
+</li>
+<li>
+<p>-XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles -XX:GCLogFileSize</p>
+<div class="paragraph">
+<p>JDK8文档未说明（估计不可用），根据openjdk源码发现JDK8u可用(具体8u的哪个版本开始支持未确认)，JDK11/17不可用<br>
+支持按gc日志大小滚动<br>
+参考 <a href="https://stackoverflow.com/questions/35629487/can-we-rotate-gc-log-based-on-specific-time-in-jdk-8">Can we rotate GC log based on Specific Time in JDK 8?</a><br>
+参考 <a href="http://hg.openjdk.java.net/jdk8u/jdk8u/hotspot/file/2b2511bd3cc8/src/share/vm/runtime/globals.hpp#l2447">JDK8u源码</a><br>
+example：-XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=5 -XX:GCLogFileSize=1k<br>
+该配置使得日志文件在到达1k大小时，新建新的日志文件，日志文件数最大为5个</p>
+</div>
+</li>
+<li>
+<p>仅JDK8可用的一些参数，以及在JDK11/17的替代</p>
+<div class="paragraph">
+<p>-XX:+PrintGC -Xlog:gc<br>
+-XX:PrintGCApplicationConcurrentTime -Xlog:safepoint<br>
+-XX:PrintGCApplicationStoppedTime -Xlog:safepoint<br>
+-XX:+PrintGCDateStamps 无替代<br>
+-XX:+PrintGCDetails -Xlog:gc*<br>
+-XX:+PrintGCTaskTimeStamps -Xlog:gc+task*=debug<br>
+-XX:+PrintGCTimeStamps 无替代<br>
+-XX:+PrintTenuringDistribution -Xlog:gc+age*=level</p>
+</div>
+</li>
+<li>
+<p>JDK8文档没有，估计在JDK8u中</p>
+<div class="paragraph">
+<p>-XX:+PrintHeapAtGC -Xlog:gc+heap=trace<br>
+-XX:+PrintReferenceGC -Xlog:gc+ref*=debug<br>
+-XX:+SafepointTimeout 开启safepoint超时<br>
+-XX:SafepointTimeoutDelay=1000 safepoint超时时间<br>
+-XX:+PrintSafepointStatistics 打印Safepoint统计信息<br>
+-XX:PrintSafepointStatisticsCount=1 TODO</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="其他日志"><a class="anchor" href="#其他日志"></a>4.2. 其他日志</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>-verbose:class</p>
+<div class="paragraph">
+<p>显示加载类的信息</p>
+</div>
+</li>
+<li>
+<p>-verbose:jni
+显示native方法，jni活动的信息</p>
+</li>
+<li>
+<p>-XX:+PrintCommandLineFlags</p>
+<div class="paragraph">
+<p>打印在命令行指定的jvm参数</p>
+</div>
+</li>
+<li>
+<p>-XX:+PrintContainerInfo</p>
+<div class="paragraph">
+<p>JDK8可用，JDK11/17不可用<br>
+打印容器信息</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="容器支持"><a class="anchor" href="#容器支持"></a>5. 容器支持</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>-XX:+UseContainerSupport</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="其他参数"><a class="anchor" href="#其他参数"></a>6. 其他参数</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>--dry-run</p>
+<div class="paragraph">
+<p>JDK11/17 创建虚拟机但是不执行main方法，在验证命令行参数时十分有用</p>
+</div>
+</li>
+<li>
+<p>--version</p>
+<div class="paragraph">
+<p>JDK11/17 打印版本号至标准输出并退出</p>
+</div>
+</li>
+<li>
+<p>-version</p>
+<div class="paragraph">
+<p>打印版本号至标准错误并退出</p>
+</div>
+</li>
+<li>
+<p>-help or -?
++ 帮助</p>
+</li>
+<li>
+<p>-server
+以服务器vm启动应用，启动速度变慢，但随着时间推移，运行应用速度变快</p>
+</li>
+<li>
+<p>-XshowSettings:category
+显示设置并继续，可能的category值如下：</p>
+<div class="ulist">
+<ul>
+<li>
+<p>all 显示所有设置，默认值</p>
+</li>
+<li>
+<p>locale
+显示locale</p>
+</li>
+<li>
+<p>properties
+显示系统属性</p>
+</li>
+<li>
+<p>vm
+显示jvm设置</p>
+</li>
+<li>
+<p>system JDK11/17 on Linux: 显示宿主机或容器配置</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>-XX:NativeMemoryTracking=mode
+跟踪jvm native内存的使用，mode可以是以下值</p>
+<div class="ulist">
+<ul>
+<li>
+<p>off 关闭，等同于不添加此参数</p>
+</li>
+<li>
+<p>summary 仅跟踪jvm子系统，如java heap，class，code，thread</p>
+</li>
+<li>
+<p>detail 除跟踪jvm子系统，还会跟踪 individual CallSite, individual virtual memory region，committed regions</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>-XX:-UseBiasedLocking</p>
+<div class="paragraph">
+<p>禁用偏向锁。偏向锁在有大量非竞争同步的应用中可以显著加快运行速度，但某些锁定模式下会减速。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>JDK8/11默认是开启的。</p>
+</li>
+<li>
+<p>JDK17默认是禁用的。</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>-XX:+HeapDumpOnOutOfMemoryError</p>
+<div class="paragraph">
+<p>发生java.lang.OutOfMemoryError导出内存快照</p>
+</div>
+</li>
+<li>
+<p>-XX:HeapDumpPath=path</p>
+<div class="paragraph">
+<p>当指定-XX:+HeapDumpOnOutOfMemoryError时，配置内存快照导出的文件位置</p>
+</div>
+</li>
+<li>
+<p>-XX:LogFile=path</p>
+<div class="paragraph">
+<p>hotspot日志位置</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+  </div>
+
+  <footer class="post-footer">
+    <nav class="post-pagination" role="navigation">
+      
+        <a class="post-previous" href="/blogs/java/jvm-qps.html">
+          <h4 class="post-pagination-label">Prev</h4>
+          <i class="fas fa-arrow-left"></i>
+          <span class="post-pagination-title">
+            JVM内存与线程设置对qps的影响
+
+          </span>
+        </a>
+      
+
+      
+        <a class="post-next" href="/blogs/k8s/k8s-user.html">
+          <h4 class="post-pagination-label">Next</h4>
+          <span class="post-pagination-title">
+            k8s用户创建与权限
+
+          </span>
+          <i class="fas fa-arrow-right"></i>
+        </a>
+      
+    </nav>
+  </footer>
+
+  
+  
+</article>
+
+          <footer class="site-footer">
+            <div class="footer-col-wrapper">
+
+  <div class="footer-col">
+    <div class="copyright">
+      
+      
+      
+      
+      <p>Copyright ©  老司机; All rights reserved.</p>
+      
+    </div>
+    <p>
+      Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/ngzhio/jekyll-theme-hamilton">Hamilton</a>
+    </p>
+  </div>
+
+  <div class="footer-col">
+    <p>一个帮助开发人员探索java生态，并成为优秀工程师的网站</p>
+  </div>
+  <a href="https://beian.miit.gov.cn/" target="_blank">京ICP备2022003804号-1</a>
+</div>
+
+          </footer>
+        </main>
+        <div class="site-toc">
+          <div id="toc" class="fixed-toc"><ul class="sectlevel1">
+<li><a href="#简介">1. 简介</a></li>
+<li><a href="#垃圾回收器">2. 垃圾回收器</a>
+<ul class="sectlevel2">
+<li><a href="#serial-collector">2.1. Serial Collector</a></li>
+<li><a href="#parallel-collector">2.2. Parallel Collector</a></li>
+<li><a href="#concurrent-mark-sweep-cms-collector">2.3. Concurrent Mark Sweep (CMS) Collector</a></li>
+<li><a href="#garbage-first-garbage-collector">2.4. Garbage-First Garbage Collector</a></li>
+<li><a href="#z-garbage-collector">2.5. Z Garbage Collector</a></li>
+</ul>
+</li>
+<li><a href="#gc配置">3. gc配置</a>
+<ul class="sectlevel2">
+<li><a href="#内存配置">3.1. 内存配置</a></li>
+<li><a href="#其他配置">3.2. 其他配置</a></li>
+<li><a href="#日志">3.3. 日志</a></li>
+</ul>
+</li>
+<li><a href="#jvm日志">4. jvm日志</a>
+<ul class="sectlevel2">
+<li><a href="#gc日志">4.1. gc日志</a></li>
+<li><a href="#其他日志">4.2. 其他日志</a></li>
+</ul>
+</li>
+<li><a href="#容器支持">5. 容器支持</a></li>
+<li><a href="#其他参数">6. 其他参数</a></li>
+</ul></div>
+        </div>
+      </div>
+    </div>
+  </body>
+
+</html>

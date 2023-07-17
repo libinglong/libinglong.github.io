@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<!--minimum-scale=1保证在chrome浏览器中调试响应窗口时，拥有fixed position的block不会跟随scroll变化-->
+<meta name="viewport" content="width=device-width, initial-scale=1 minimum-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>基于RabbitMQ的延迟队列服务 | 老司机</title>
+<meta name="generator" content="Jekyll v3.9.3" />
+<meta property="og:title" content="基于RabbitMQ的延迟队列服务" />
+<meta name="author" content="老司机" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="一个帮助开发人员探索java生态，并成为优秀工程师的网站" />
+<meta property="og:description" content="一个帮助开发人员探索java生态，并成为优秀工程师的网站" />
+<link rel="canonical" href="https://www.libinglong.tech/blogs/tools/rabbitmq-delay-queue/rabbit-based-delay-queue.html" />
+<meta property="og:url" content="https://www.libinglong.tech/blogs/tools/rabbitmq-delay-queue/rabbit-based-delay-queue.html" />
+<meta property="og:site_name" content="老司机" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2023-07-17T09:53:59-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="基于RabbitMQ的延迟队列服务" />
+<meta name="twitter:site" content="@ngzhio" />
+<meta name="twitter:creator" content="@老司机" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"老司机"},"dateModified":"2023-07-17T09:53:59-05:00","datePublished":"2023-07-17T09:53:59-05:00","description":"一个帮助开发人员探索java生态，并成为优秀工程师的网站","headline":"基于RabbitMQ的延迟队列服务","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.libinglong.tech/blogs/tools/rabbitmq-delay-queue/rabbit-based-delay-queue.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://www.libinglong.tech/logo.png"},"name":"老司机"},"url":"https://www.libinglong.tech/blogs/tools/rabbitmq-delay-queue/rabbit-based-delay-queue.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+<link type="application/atom+xml" rel="alternate" href="https://www.libinglong.tech/feed.xml" title="老司机" />
+
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CZ6MM7XT4X"></script>
+<script>
+  window['ga-disable-G-CZ6MM7XT4X'] = window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1";
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-CZ6MM7XT4X');
+</script>
+
+
+
+
+
+
+<script async src="/assets/js/site.js"></script>
+<script async src="/assets/js/setup.js"></script>
+
+<!-- Google Fonts -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open%20Sans|Roboto|Roboto%20Slab|Inconsolata|Dancing%20Script|Noto%20Sans%20SC|Noto%20Sans%20TC|Noto%20Serif%20SC|Noto%20Serif%20TC|Ma%20Shan%20Zheng">
+
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="/assets/css/skin.css">
+
+<!-- Begin selecting skin -->
+
+<!-- End selecting skin -->
+
+
+
+
+
+  </head>
+
+  <body>
+    <header class="header-container">
+      <div class="site-header">
+  <script>
+    function clickSidebarButton() {
+      const elem = document.getElementById("site-sidebar")
+      if (elem.style.display === "none" || elem.style.display === "") {
+        elem.style.display = "block";
+      } else {
+        elem.style.display = "none";
+      }
+    }
+  </script>
+  <a class="site-sidebar-button" onclick="clickSidebarButton()"><i class="far fa-user"></i>
+  </a>
+  <div class="site-title">
+    <a  rel="author" href="/">老司机</a>
+  </div>
+
+  
+  <nav class="site-nav">
+    <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+    <label for="nav-trigger" title="nav-trigger">
+        <span class="menu-icon">
+          <svg viewBox="0 0 18 15" width="18px" height="15px">
+            <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+          </svg>
+        </span>
+    </label>
+
+    <ul class="trigger">
+      <li><a class="" href="/java">Java</a></li>
+      
+      <li><a class="" href="/spring-boot">SpringBoot</a></li>
+      
+      <li><a class="" href="/spring-cloud">SpringCloud</a></li>
+      
+      <li><a class="" href="/blogs">博客</a></li>
+      
+      <li><a class="" href="/about">关于</a></li>
+      </ul>
+  </nav>
+  
+</div>
+
+    </header>
+    <div id="tocbar" style="display: none">
+      <button id="toggle-toc"></button>
+    </div>
+    <div class="site-container">
+      <div class="site-body">
+        <aside class="site-sidebar" id="site-sidebar">
+          <div class="fixed-sidebar">
+            
+            <div class="sidebar-section"><img src="/logo.png" class="author-avatar u-photo align-center" alt="老司机">
+  </div>
+
+<div class="sidebar-section">
+  <ul class="contact-list">
+    <li>
+        <i class="sidebar-icon fas fa-envelope"></i>
+        <a class="contact-info u-email" href="mailto:libinglong9@gmail.com">libinglong9@gmail.com</a>
+      </li>
+    
+  </ul>
+</div>
+
+<div class="sidebar-section feed-subscribe">
+  <a href="/feed.xml">
+    <i class="sidebar-icon fas fa-rss"></i><span>Subscribe</span>
+  </a>
+</div>
+
+<div class="sidebar-section">
+    <ul class="social-icons">
+      <li>
+          <a class="social-icon" href="https://v.douyin.com/LGmntoC"><i class="fab fa-tiktok fa-2x" title="Douyin"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://github.com/libinglong"><i class="fab fa-github fa-2x" title="GitHub"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://www.youtube.com/channel/UCXCxWAxBOO_-b0Kot-04LLQ"><i class="fab fa-youtube fa-2x" title="Youtube"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://t.me/laosiji_spring"><i class="fab fa-telegram fa-2x" title="Telegram"></i></a>
+        </li>
+    </ul>
+  </div>
+<a class="qq-link" target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=gZ9BYnnw9Ud7u3wjUq18A7EcIzTbVFVh&jump_from=webapi"><img border="0" src="//pub.idqqimg.com/wpa/images/group.png" alt="老司机" title="老司机"></a>
+<div>
+  <img src="/assets/img/weixin.jpg"/>
+  <span class="text-center">微信</span>
+</div>
+
+            
+          </div>
+        </aside>
+        <main class="site-main" id="content" aria-label="Content" tabindex="1">
+          <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+
+    <h1 class="post-title p-name" itemprop="name headline">基于RabbitMQ的延迟队列服务</h1>
+    <p class="post-meta"><!--      <time class="dt-published" datetime="" itemprop="datePublished">-->
+<!--        -->
+<!--      </time>--></p>
+
+  </header>
+
+  <div class="post-content e-content doc" itemprop="articleBody">
+    <div class="sect2">
+<h3 id="基于rabbitmq的延迟队列服务"><a class="anchor" href="#基于rabbitmq的延迟队列服务"></a>1. 基于RabbitMQ的延迟队列服务</h3>
+<div class="paragraph">
+<p>近期基于RabbitMQ搭建了一个分布式的延迟队列服务，在网上查到的多种实现方案都有瑕疵，且缺乏细节，甚至常见的方案实际上却存在很大的问题，例如redis过期key监听，RabbitMQ死信队列，非常误导人，因此特地写一篇博客，分享给有需要的朋友。</p>
+</div>
+<div class="sect3">
+<h4 id="业务需求"><a class="anchor" href="#业务需求"></a>1.1. 业务需求</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>订单超时取消</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>例如，商城订单15分钟内没有支付就取消，从而释放库存</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>日程提醒</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>例如，提醒某人某个时间做什么事</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>定时发送邮件</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>上述场景有几个共同的特征</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>非周期性</p>
+</li>
+<li>
+<p>在指定的时间触发一次</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="队列服务的主要要求"><a class="anchor" href="#队列服务的主要要求"></a>1.2. 队列服务的主要要求</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>同一个数据，只有一个节点消费，即无竞争，避免业务代码有锁编程</p>
+</li>
+<li>
+<p>正常情况下，一个数据只消费一次，业务代码不考虑幂等性问题</p>
+</li>
+<li>
+<p>触发时间和配置时间的误差尽可能低</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="方案对比"><a class="anchor" href="#方案对比"></a>1.3. 方案对比</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>数据中心 + 轮询方式</p>
+</li>
+<li>
+<p>redis zset，以时间戳作为score，轮询首个member，如果时间戳比当前时间早即触发</p>
+</li>
+<li>
+<p>mysql，建立时间戳b+ tree索引，轮询首个member，如果时间戳比当前时间早即触发</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>缺点是：轮询效率较低，精度和轮询的时间间隔有关，并且分布式多个节点同时轮询，可能会取到相同的记录，产生竞争</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://redis.io/topics/notifications">Redis Keyspace Notifications</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>网上一般介绍的是过期key监听，根据文档，实际上https://redis.io/topics/notifications[Redis Keyspace Notifications]也有其他的监听方式：</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>给定key的所有命令</p>
+</li>
+<li>
+<p>所有key的lpush命令</p>
+</li>
+<li>
+<p>所有在database 0中的key过期事件</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>过期key的问题其实很大，Redis 以两种方式使具有生存时间关联的键过期：</p>
+</div>
+<div class="paragraph">
+<p>Redis pub/sub的缺点文档也写的很清楚，客户端连接断开期间的事件不会在重连后收到，多个连接的客户端会收到相同的事件，从而产生竞争。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Apache RocketMQ定时消息</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>&gt; broker有配置项messageDelayLevel，默认值为“1s 5s 10s 30s 1m 2m 3m 4m 5m 6m 7m 8m 9m 10m 20m 30m 1h 2h”，18个level。可以配置自定义messageDelayLevel。注意，messageDelayLevel是broker的属性，不属于某个topic。发消息时，设置delayLevel等级即可：msg.setDelayLevel(level)</p>
+</div>
+<div class="paragraph">
+<p>根据上述官方文档，可以看出其精度是有18种粒度，如果想要实现随意的粒度，需要在中间件层面解决粒度的问题。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>RabbitMQ 过期消息+死信队列</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>&gt; 以下来自官方文档
+ &gt;
+ &gt; Queues that had a per-message TTL applied to them retroactively (when they already had messages) will discard the messages when specific events occur. Only when expired messages reach the head of a queue will they actually be discarded (or dead-lettered).</p>
+</div>
+<div class="paragraph">
+<p>上述文档表示，仅当消息到达队列头部时，消息才会被发送到死信队列，这样会导致非常严重的问题。比如，如果首先发布了一个延迟20秒到期的任务A，又发布了延迟5秒到期的任务B，那么B任务最钟延迟时间为20s！有人为了解决此问题为不同的延迟消息创建不同的队列，这和RocketMQ的实现一样。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://github.com/RabbitMQ/RabbitMQ-delayed-message-exchange">RabbitMQ延迟消息插件</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>最终选择了这个来实现，其主要原理为，server端将延迟的消息写入到Mnesia table，并通过erlang计时器在延迟时间到达时发送到对应的队列。官方的介绍是，当前插件为实验特性，但非常稳定可用于生产环境。但其延迟时间限制为0-2^32-1毫秒。</p>
+</div>
+<div class="paragraph">
+<p>&gt;以下来自官方文档
+ &gt;
+ &gt;This plugin is considered to be <strong>experimental yet fairly stable and potential suitable for production use as long as the user is aware of its limitations</strong>.
+ &gt;
+ &gt;For each message that crosses an <code>&quot;x-delayed-message&quot;</code> exchange, the plugin will try to determine if the message has to be expired by making sure the delay is within range, ie: <code>Delay &gt; 0, Delay =&lt; ?ERL_MAX_T</code> (In Erlang a timer can be set up to (2^32)-1 milliseconds in the future).</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="创建队列"><a class="anchor" href="#创建队列"></a>1.4. 创建队列</h4>
+<div class="paragraph">
+<p>这个在https://github.com/RabbitMQ/RabbitMQ-delayed-message-exchange[RabbitMQ延迟消息插件]的文档中有介绍，不必赘述</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="rabbitmq-发布者确认机制"><a class="anchor" href="#rabbitmq-发布者确认机制"></a>1.5. RabbitMQ 发布者确认机制</h4>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Using standard AMQP 0-9-1, the only way to guarantee that a message isn&#8217;t lost is by using transactions – make the channel transactional then for each message or set of messages publish, commit. In this case, transactions are unnecessarily heavyweight and decrease throughput by a factor of 250. To remedy this, a confirmation mechanism was introduced. It mimics the consumer acknowledgements mechanism already present in the protocol.</p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>RabbitMQ可以使用事务或者发布者确认机制保证消息的可靠性，前者比后者的吞吐量下降了250倍。使用spring-rabbit集成时，应考虑该种方式。</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="消费"><a class="anchor" href="#消费"></a>1.6. 消费</h4>
+<div class="paragraph">
+<p>消费是实现延迟队列服务非常重要的一个环节，但是却鲜有人提。如何保证消息尽可能不积压？一旦消息积压，延迟任务的时间精度就会变差。保证消息不积压，首先想到的是使用多个消费者提高消费能力。</p>
+</div>
+<div class="paragraph">
+<p>以spring集成RabbitMQ为例</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>如果使用SimpleMessageListenerContainer，则可以使用setConcurrency设置并发数</p>
+</li>
+<li>
+<p>如果使用DirectMessageListenerContainer，则可以使用setConsumersPerQueue设置并发数</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>但是这是有问题的，一般消费者还会有一个prefetchCount属性，这个是指一次拉取消息的数目，spring默认是250。因此假设当前有2000条消息，10个消费者，可能有4个消费者各自获取了250条消息，而其他消费者则没有获取到消息。由于网络IO一般是比较耗时的操作，因此prefetchCount也不应当设置为较小的值。</p>
+</div>
+<div class="paragraph">
+<p>因此正确的做法是使用少量的消费者，如果负载不高，一个分布式节点有一个消费者就够了，消费者消费消息则使用线程池异步去做。</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="提供sdk-vs-提供http服务"><a class="anchor" href="#提供sdk-vs-提供http服务"></a>1.7. 提供SDK VS 提供http服务</h4>
+<div class="paragraph">
+<p>由于集成RabbitMQ，并保证消息的及时触发要考虑上述很多细节。因此有必要将上述逻辑的复杂性掩藏，对外提供一个SDK。但使用SDK时，业务开发仍需要关注一些必需的配置和代码，如线程池参数，RabbitMQ消费者确认等。因此作者更倾向于使用该SDK再次包装成一个http服务，并暴露如下接口。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>创建队列，参数元数据可以在RabbitMQ的队列声明时添加</p>
+</li>
+<li>
+<p>delayQueueName 延迟队列名称</p>
+</li>
+<li>
+<p>messageCallbackUrl 消息回调接口</p>
+</li>
+<li>
+<p>confirmCallbackUrl 消息确认接口</p>
+</li>
+<li>
+<p>发送消息</p>
+</li>
+<li>
+<p>delayQueueName 延迟队列名称</p>
+</li>
+<li>
+<p>message 消息</p>
+</li>
+<li>
+<p>confirmId 确认id</p>
+</li>
+<li>
+<p>delayTimeInMs 延迟时间</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>笔者使用线程池异步回调，使用Apache HttpClient发起http请求，需要注意client的maxConnPerRoute属性，该参数用于解决http队头阻塞问题，任何的阻塞都会影响到消息触发时间的精度。</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="提供http服务的难点"><a class="anchor" href="#提供http服务的难点"></a>1.8. 提供http服务的难点</h4>
+<div class="paragraph">
+<p>注意到http服务隐藏了更多的细节，因此实现起来则更为复杂。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>初始化消费者</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>服务启动时，使用RabbitMQ提供的rest的接口，查到所有延迟队列，进行监听</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>动态创建队列</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>动态创建队列需要通知到其他所有的消费者添加该队列的监听，因此需要创建一个广播的exchange，所有节点声明一个独占的queue并binding到该exchange进行监听。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>查询队列元数据信息</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>使用RabbitMQ提供的rest接口，查询queue的元数据信息，如创建时配置的回调接口。</p>
+</div>
+<div class="paragraph">
+<p>之所以使用到了rest接口，因为这里要查询的信息，不在amqp协议内，因此没有相应的api。rest接口文档可在admin中查看。</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../../images/rabbitmq-admin.png" alt="image"></span></p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="缺点"><a class="anchor" href="#缺点"></a>1.9. 缺点</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>由于每个数据仅在一个节点保存，因此需要底层存储提供备份</p>
+</li>
+<li>
+<p>节点宕机会导致数据触发不及时，必须尽快拉起</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>如果上述缺点无法接受的话，可以考虑RocketMQ</p>
+</div>
+</div>
+</div>
+  </div>
+
+  <footer class="post-footer">
+    <nav class="post-pagination" role="navigation">
+      
+        <a class="post-previous" href="/blogs/tools/git/git-merge.html">
+          <h4 class="post-pagination-label">Prev</h4>
+          <i class="fas fa-arrow-left"></i>
+          <span class="post-pagination-title">
+            为什么使用rebase而不是merge进行分支合并
+
+          </span>
+        </a>
+      
+
+      
+        <a class="post-next" href="/blogs/troubleshooting/performance/al1.html">
+          <h4 class="post-pagination-label">Next</h4>
+          <span class="post-pagination-title">
+            史诗级java低时延调优案例1
+
+          </span>
+          <i class="fas fa-arrow-right"></i>
+        </a>
+      
+    </nav>
+  </footer>
+
+  
+  
+</article>
+
+          <footer class="site-footer">
+            <div class="footer-col-wrapper">
+
+  <div class="footer-col">
+    <div class="copyright">
+      
+      
+      
+      
+      <p>Copyright ©  老司机; All rights reserved.</p>
+      
+    </div>
+    <p>
+      Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/ngzhio/jekyll-theme-hamilton">Hamilton</a>
+    </p>
+  </div>
+
+  <div class="footer-col">
+    <p>一个帮助开发人员探索java生态，并成为优秀工程师的网站</p>
+  </div>
+  <a href="https://beian.miit.gov.cn/" target="_blank">京ICP备2022003804号-1</a>
+</div>
+
+          </footer>
+        </main>
+        <div class="site-toc">
+          <div id="toc" class="fixed-toc"><ul class="sectlevel2">
+<li><a href="#基于rabbitmq的延迟队列服务">1. 基于RabbitMQ的延迟队列服务</a>
+<ul class="sectlevel3">
+<li><a href="#业务需求">1.1. 业务需求</a></li>
+<li><a href="#队列服务的主要要求">1.2. 队列服务的主要要求</a></li>
+<li><a href="#方案对比">1.3. 方案对比</a></li>
+<li><a href="#创建队列">1.4. 创建队列</a></li>
+<li><a href="#rabbitmq-发布者确认机制">1.5. RabbitMQ 发布者确认机制</a></li>
+<li><a href="#消费">1.6. 消费</a></li>
+<li><a href="#提供sdk-vs-提供http服务">1.7. 提供SDK VS 提供http服务</a></li>
+<li><a href="#提供http服务的难点">1.8. 提供http服务的难点</a></li>
+<li><a href="#缺点">1.9. 缺点</a></li>
+</ul>
+</li>
+</ul></div>
+        </div>
+      </div>
+    </div>
+  </body>
+
+</html>

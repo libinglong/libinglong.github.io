@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<!--minimum-scale=1保证在chrome浏览器中调试响应窗口时，拥有fixed position的block不会跟随scroll变化-->
+<meta name="viewport" content="width=device-width, initial-scale=1 minimum-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>JDK8u/11/17 JVM Options实践 | 老司机</title>
+<meta name="generator" content="Jekyll v3.9.3" />
+<meta property="og:title" content="JDK8u/11/17 JVM Options实践" />
+<meta name="author" content="老司机" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="一个帮助开发人员探索java生态，并成为优秀工程师的网站" />
+<meta property="og:description" content="一个帮助开发人员探索java生态，并成为优秀工程师的网站" />
+<link rel="canonical" href="https://www.libinglong.tech/blogs/java/jdk-vmoption-practice.html" />
+<meta property="og:url" content="https://www.libinglong.tech/blogs/java/jdk-vmoption-practice.html" />
+<meta property="og:site_name" content="老司机" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2023-07-17T09:53:59-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="JDK8u/11/17 JVM Options实践" />
+<meta name="twitter:site" content="@ngzhio" />
+<meta name="twitter:creator" content="@老司机" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"老司机"},"dateModified":"2023-07-17T09:53:59-05:00","datePublished":"2023-07-17T09:53:59-05:00","description":"一个帮助开发人员探索java生态，并成为优秀工程师的网站","headline":"JDK8u/11/17 JVM Options实践","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.libinglong.tech/blogs/java/jdk-vmoption-practice.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://www.libinglong.tech/logo.png"},"name":"老司机"},"url":"https://www.libinglong.tech/blogs/java/jdk-vmoption-practice.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+<link type="application/atom+xml" rel="alternate" href="https://www.libinglong.tech/feed.xml" title="老司机" />
+
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CZ6MM7XT4X"></script>
+<script>
+  window['ga-disable-G-CZ6MM7XT4X'] = window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1";
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-CZ6MM7XT4X');
+</script>
+
+
+
+
+
+
+<script async src="/assets/js/site.js"></script>
+<script async src="/assets/js/setup.js"></script>
+
+<!-- Google Fonts -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open%20Sans|Roboto|Roboto%20Slab|Inconsolata|Dancing%20Script|Noto%20Sans%20SC|Noto%20Sans%20TC|Noto%20Serif%20SC|Noto%20Serif%20TC|Ma%20Shan%20Zheng">
+
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="/assets/css/skin.css">
+
+<!-- Begin selecting skin -->
+
+<!-- End selecting skin -->
+
+
+
+
+
+  </head>
+
+  <body>
+    <header class="header-container">
+      <div class="site-header">
+  <script>
+    function clickSidebarButton() {
+      const elem = document.getElementById("site-sidebar")
+      if (elem.style.display === "none" || elem.style.display === "") {
+        elem.style.display = "block";
+      } else {
+        elem.style.display = "none";
+      }
+    }
+  </script>
+  <a class="site-sidebar-button" onclick="clickSidebarButton()"><i class="far fa-user"></i>
+  </a>
+  <div class="site-title">
+    <a  rel="author" href="/">老司机</a>
+  </div>
+
+  
+  <nav class="site-nav">
+    <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+    <label for="nav-trigger" title="nav-trigger">
+        <span class="menu-icon">
+          <svg viewBox="0 0 18 15" width="18px" height="15px">
+            <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+          </svg>
+        </span>
+    </label>
+
+    <ul class="trigger">
+      <li><a class="" href="/java">Java</a></li>
+      
+      <li><a class="" href="/spring-boot">SpringBoot</a></li>
+      
+      <li><a class="" href="/spring-cloud">SpringCloud</a></li>
+      
+      <li><a class="" href="/blogs">博客</a></li>
+      
+      <li><a class="" href="/about">关于</a></li>
+      </ul>
+  </nav>
+  
+</div>
+
+    </header>
+    <div id="tocbar" style="display: none">
+      <button id="toggle-toc"></button>
+    </div>
+    <div class="site-container">
+      <div class="site-body">
+        <aside class="site-sidebar" id="site-sidebar">
+          <div class="fixed-sidebar">
+            
+            <div class="sidebar-section"><img src="/logo.png" class="author-avatar u-photo align-center" alt="老司机">
+  </div>
+
+<div class="sidebar-section">
+  <ul class="contact-list">
+    <li>
+        <i class="sidebar-icon fas fa-envelope"></i>
+        <a class="contact-info u-email" href="mailto:libinglong9@gmail.com">libinglong9@gmail.com</a>
+      </li>
+    
+  </ul>
+</div>
+
+<div class="sidebar-section feed-subscribe">
+  <a href="/feed.xml">
+    <i class="sidebar-icon fas fa-rss"></i><span>Subscribe</span>
+  </a>
+</div>
+
+<div class="sidebar-section">
+    <ul class="social-icons">
+      <li>
+          <a class="social-icon" href="https://v.douyin.com/LGmntoC"><i class="fab fa-tiktok fa-2x" title="Douyin"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://github.com/libinglong"><i class="fab fa-github fa-2x" title="GitHub"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://www.youtube.com/channel/UCXCxWAxBOO_-b0Kot-04LLQ"><i class="fab fa-youtube fa-2x" title="Youtube"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://t.me/laosiji_spring"><i class="fab fa-telegram fa-2x" title="Telegram"></i></a>
+        </li>
+    </ul>
+  </div>
+<a class="qq-link" target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=gZ9BYnnw9Ud7u3wjUq18A7EcIzTbVFVh&jump_from=webapi"><img border="0" src="//pub.idqqimg.com/wpa/images/group.png" alt="老司机" title="老司机"></a>
+<div>
+  <img src="/assets/img/weixin.jpg"/>
+  <span class="text-center">微信</span>
+</div>
+
+            
+          </div>
+        </aside>
+        <main class="site-main" id="content" aria-label="Content" tabindex="1">
+          <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+
+    <h1 class="post-title p-name" itemprop="name headline">JDK8u/11/17 JVM Options实践</h1>
+    <p class="post-meta"><!--      <time class="dt-published" datetime="" itemprop="datePublished">-->
+<!--        -->
+<!--      </time>--></p>
+
+  </header>
+
+  <div class="post-content e-content doc" itemprop="articleBody">
+    <div class="sect1">
+<h2 id="简介"><a class="anchor" href="#简介"></a>1. 简介</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>本节讨论了JDK8u/11/17在生产中的配置</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="jdk8u"><a class="anchor" href="#jdk8u"></a>2. JDK8u</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="必选"><a class="anchor" href="#必选"></a>2.1. 必选</h3>
+<div class="paragraph">
+<p>-XX:+PrintGC -XX:+PrintReferenceGC -XX:+PrintHeapAtGC -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps -XX:+PrintGCApplicationStoppedTime -XX:+PrintGCApplicationConcurrentTime -XX:+PrintTenuringDistribution -XX:+SafepointTimeout -XX:SafepointTimeoutDelay=1000 -XX:PrintSafepointStatisticsCount=1 -XX:+PrintSafepointStatistics -XX:-UseBiasedLocking -Xss256k -XX:+PrintContainerInfo</p>
+</div>
+<div class="paragraph">
+<p>-Xloggc:gc.log 如果每次文件位置固定，注意防止覆盖，方便分析问题</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="定制"><a class="anchor" href="#定制"></a>2.2. 定制</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>垃圾回收器选择</p>
+<div class="ulist">
+<ul>
+<li>
+<p>G1 -XX:+UseG1GC</p>
+<div class="ulist">
+<ul>
+<li>
+<p>-XX:MaxGCPauseMillis=</p>
+<div class="paragraph">
+<p>设置期望的gc最大停顿时间(毫秒)</p>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>CMS -XX:+UseConcMarkSweepGC</p>
+<div class="paragraph">
+<p>推荐使用G1作为生产默认选择</p>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>内存</p>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>按比例配置方式</p>
+<div class="paragraph">
+<p>推荐默认按比例配置</p>
+</div>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>按比例配置heap</p>
+<div class="paragraph">
+<p>三个值保持一致，注意，这里的值是百分比<br>
+-XX:InitialRAMPercentage=75.0<br>
+-XX:MinRAMPercentage=75.0<br>
+-XX:MaxRAMPercentage=75.0</p>
+</div>
+</li>
+<li>
+<p>按比例配置新生代和老年代</p>
+<div class="paragraph">
+<p>注意，这里的值，是老年代/新生代的比值，新生代是分母，值必须是整数，因此导致老年代总是&gt;=新生代。对于web应用，往往老年代很小，因此建议不要使用此参数调节配比，而是通过计算的方式，使用-Xmn来设置年轻代内存。<br>
+-XX:NewRatio=ratio</p>
+</div>
+</li>
+<li>
+<p>按比例配置eden和survivor区</p>
+<div class="paragraph">
+<p>这里的值是eden/survivor的比值，注意survivor有两个,假设radio=5，那么eden=young * 5/(5 + 1*2)。<br>
+-XX:SurvivorRatio=radio</p>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>按数值配置</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>配置堆</p>
+<div class="paragraph">
+<p>设置堆的初始值和最大值为同一个值<br>
+例如 -Xmx1024m -Xms1024m</p>
+</div>
+</li>
+<li>
+<p>配置新生代</p>
+<div class="paragraph">
+<p>例如 -Xmn512m</p>
+</div>
+</li>
+<li>
+<p>配置eden和survivor区</p>
+<div class="paragraph">
+<p>Survivor区只能通过比例配置。</p>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>locale</p>
+<div class="paragraph">
+<p>建议使用以下默认值</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>文件编码 -Dfile.encoding=UTF-8</p>
+</li>
+<li>
+<p>国家 -Duser.country=CN</p>
+</li>
+<li>
+<p>语言 -Duser.language=zh</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+关于java在容器中locale更多细节见<a href="../docker/docker-index.html#java-locale">java-locale</a>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="可选"><a class="anchor" href="#可选"></a>2.3. 可选</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>safepoint</p>
+<div class="paragraph">
+<p>如果Safepoint相关日志没有输出至stdout，添加下述参数，这里的细节记不清了</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>-XX:+UnlockDiagnosticVMOptions</p>
+</li>
+<li>
+<p>-XX:+LogVMOutput</p>
+</li>
+<li>
+<p>-XX:LogFile=vm.log</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>stdout和stderr记得重定向到文件或者进行采集<br>
+如果日志文件位置固定，注意防止覆盖，或进行采集</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="jdk11"><a class="anchor" href="#jdk11"></a>3. JDK11</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="必选-2"><a class="anchor" href="#必选-2"></a>3.1. 必选</h3>
+<div class="paragraph">
+<p>-XX:-UseBiasedLocking -Xss256k -Xlog:gc*,safepoint=debug:path/to/gc.log:time,uptime,level,tags</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="定制-2"><a class="anchor" href="#定制-2"></a>3.2. 定制</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>垃圾回收器</p>
+<div class="paragraph">
+<p>JDK11建议仅提供G1 GC，配置方法与JDK8u相同</p>
+</div>
+</li>
+<li>
+<p>内存配置 与JDK8u相同</p>
+</li>
+<li>
+<p>locale 与JDK8u相同</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>在macos zsh终端环境，-Xlog因为有通配符，需要加引号，否则报错zsh: no matches found，例子：<br>
+java "-Xlog:gc*,safepoint=debug:gc.log:time,uptime,level,tags" -jar odin-infra-data.jar</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="jdk17"><a class="anchor" href="#jdk17"></a>4. JDK17</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="必选-3"><a class="anchor" href="#必选-3"></a>4.1. 必选</h3>
+<div class="paragraph">
+<p>同JDK11</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="定制-3"><a class="anchor" href="#定制-3"></a>4.2. 定制</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>垃圾回收器</p>
+<div class="paragraph">
+<p>推荐默认ZGC</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>G1 -XX:+UseG1GC</p>
+</li>
+<li>
+<p>ZGC -XX:+UseZGC</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>内存 同JDK8u</p>
+</li>
+<li>
+<p>locale 同JDK8u</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+  </div>
+
+  <footer class="post-footer">
+    <nav class="post-pagination" role="navigation">
+      
+        <a class="post-previous" href="/blogs/docker/locale.html">
+          <h4 class="post-pagination-label">Prev</h4>
+          <i class="fas fa-arrow-left"></i>
+          <span class="post-pagination-title">
+            java编码与docker locale的关系
+
+          </span>
+        </a>
+      
+
+      
+        <a class="post-next" href="/blogs/java/jvm-qps.html">
+          <h4 class="post-pagination-label">Next</h4>
+          <span class="post-pagination-title">
+            JVM内存与线程设置对qps的影响
+
+          </span>
+          <i class="fas fa-arrow-right"></i>
+        </a>
+      
+    </nav>
+  </footer>
+
+  
+  
+</article>
+
+          <footer class="site-footer">
+            <div class="footer-col-wrapper">
+
+  <div class="footer-col">
+    <div class="copyright">
+      
+      
+      
+      
+      <p>Copyright ©  老司机; All rights reserved.</p>
+      
+    </div>
+    <p>
+      Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/ngzhio/jekyll-theme-hamilton">Hamilton</a>
+    </p>
+  </div>
+
+  <div class="footer-col">
+    <p>一个帮助开发人员探索java生态，并成为优秀工程师的网站</p>
+  </div>
+  <a href="https://beian.miit.gov.cn/" target="_blank">京ICP备2022003804号-1</a>
+</div>
+
+          </footer>
+        </main>
+        <div class="site-toc">
+          <div id="toc" class="fixed-toc"><ul class="sectlevel1">
+<li><a href="#简介">1. 简介</a></li>
+<li><a href="#jdk8u">2. JDK8u</a>
+<ul class="sectlevel2">
+<li><a href="#必选">2.1. 必选</a></li>
+<li><a href="#定制">2.2. 定制</a></li>
+<li><a href="#可选">2.3. 可选</a></li>
+</ul>
+</li>
+<li><a href="#jdk11">3. JDK11</a>
+<ul class="sectlevel2">
+<li><a href="#必选-2">3.1. 必选</a></li>
+<li><a href="#定制-2">3.2. 定制</a></li>
+</ul>
+</li>
+<li><a href="#jdk17">4. JDK17</a>
+<ul class="sectlevel2">
+<li><a href="#必选-3">4.1. 必选</a></li>
+<li><a href="#定制-3">4.2. 定制</a></li>
+</ul>
+</li>
+</ul></div>
+        </div>
+      </div>
+    </div>
+  </body>
+
+</html>

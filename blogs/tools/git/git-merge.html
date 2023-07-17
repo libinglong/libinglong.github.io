@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<!--minimum-scale=1保证在chrome浏览器中调试响应窗口时，拥有fixed position的block不会跟随scroll变化-->
+<meta name="viewport" content="width=device-width, initial-scale=1 minimum-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>为什么使用rebase而不是merge进行分支合并 | 老司机</title>
+<meta name="generator" content="Jekyll v3.9.3" />
+<meta property="og:title" content="为什么使用rebase而不是merge进行分支合并" />
+<meta name="author" content="老司机" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="一个帮助开发人员探索java生态，并成为优秀工程师的网站" />
+<meta property="og:description" content="一个帮助开发人员探索java生态，并成为优秀工程师的网站" />
+<link rel="canonical" href="https://www.libinglong.tech/blogs/tools/git/git-merge.html" />
+<meta property="og:url" content="https://www.libinglong.tech/blogs/tools/git/git-merge.html" />
+<meta property="og:site_name" content="老司机" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2023-07-17T09:53:59-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="为什么使用rebase而不是merge进行分支合并" />
+<meta name="twitter:site" content="@ngzhio" />
+<meta name="twitter:creator" content="@老司机" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"老司机"},"dateModified":"2023-07-17T09:53:59-05:00","datePublished":"2023-07-17T09:53:59-05:00","description":"一个帮助开发人员探索java生态，并成为优秀工程师的网站","headline":"为什么使用rebase而不是merge进行分支合并","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.libinglong.tech/blogs/tools/git/git-merge.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://www.libinglong.tech/logo.png"},"name":"老司机"},"url":"https://www.libinglong.tech/blogs/tools/git/git-merge.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+<link type="application/atom+xml" rel="alternate" href="https://www.libinglong.tech/feed.xml" title="老司机" />
+
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CZ6MM7XT4X"></script>
+<script>
+  window['ga-disable-G-CZ6MM7XT4X'] = window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1";
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-CZ6MM7XT4X');
+</script>
+
+
+
+
+
+
+<script async src="/assets/js/site.js"></script>
+<script async src="/assets/js/setup.js"></script>
+
+<!-- Google Fonts -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open%20Sans|Roboto|Roboto%20Slab|Inconsolata|Dancing%20Script|Noto%20Sans%20SC|Noto%20Sans%20TC|Noto%20Serif%20SC|Noto%20Serif%20TC|Ma%20Shan%20Zheng">
+
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="/assets/css/skin.css">
+
+<!-- Begin selecting skin -->
+
+<!-- End selecting skin -->
+
+
+
+
+
+  </head>
+
+  <body>
+    <header class="header-container">
+      <div class="site-header">
+  <script>
+    function clickSidebarButton() {
+      const elem = document.getElementById("site-sidebar")
+      if (elem.style.display === "none" || elem.style.display === "") {
+        elem.style.display = "block";
+      } else {
+        elem.style.display = "none";
+      }
+    }
+  </script>
+  <a class="site-sidebar-button" onclick="clickSidebarButton()"><i class="far fa-user"></i>
+  </a>
+  <div class="site-title">
+    <a  rel="author" href="/">老司机</a>
+  </div>
+
+  
+  <nav class="site-nav">
+    <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+    <label for="nav-trigger" title="nav-trigger">
+        <span class="menu-icon">
+          <svg viewBox="0 0 18 15" width="18px" height="15px">
+            <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+          </svg>
+        </span>
+    </label>
+
+    <ul class="trigger">
+      <li><a class="" href="/java">Java</a></li>
+      
+      <li><a class="" href="/spring-boot">SpringBoot</a></li>
+      
+      <li><a class="" href="/spring-cloud">SpringCloud</a></li>
+      
+      <li><a class="" href="/blogs">博客</a></li>
+      
+      <li><a class="" href="/about">关于</a></li>
+      </ul>
+  </nav>
+  
+</div>
+
+    </header>
+    <div id="tocbar" style="display: none">
+      <button id="toggle-toc"></button>
+    </div>
+    <div class="site-container">
+      <div class="site-body">
+        <aside class="site-sidebar" id="site-sidebar">
+          <div class="fixed-sidebar">
+            
+            <div class="sidebar-section"><img src="/logo.png" class="author-avatar u-photo align-center" alt="老司机">
+  </div>
+
+<div class="sidebar-section">
+  <ul class="contact-list">
+    <li>
+        <i class="sidebar-icon fas fa-envelope"></i>
+        <a class="contact-info u-email" href="mailto:libinglong9@gmail.com">libinglong9@gmail.com</a>
+      </li>
+    
+  </ul>
+</div>
+
+<div class="sidebar-section feed-subscribe">
+  <a href="/feed.xml">
+    <i class="sidebar-icon fas fa-rss"></i><span>Subscribe</span>
+  </a>
+</div>
+
+<div class="sidebar-section">
+    <ul class="social-icons">
+      <li>
+          <a class="social-icon" href="https://v.douyin.com/LGmntoC"><i class="fab fa-tiktok fa-2x" title="Douyin"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://github.com/libinglong"><i class="fab fa-github fa-2x" title="GitHub"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://www.youtube.com/channel/UCXCxWAxBOO_-b0Kot-04LLQ"><i class="fab fa-youtube fa-2x" title="Youtube"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://t.me/laosiji_spring"><i class="fab fa-telegram fa-2x" title="Telegram"></i></a>
+        </li>
+    </ul>
+  </div>
+<a class="qq-link" target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=gZ9BYnnw9Ud7u3wjUq18A7EcIzTbVFVh&jump_from=webapi"><img border="0" src="//pub.idqqimg.com/wpa/images/group.png" alt="老司机" title="老司机"></a>
+<div>
+  <img src="/assets/img/weixin.jpg"/>
+  <span class="text-center">微信</span>
+</div>
+
+            
+          </div>
+        </aside>
+        <main class="site-main" id="content" aria-label="Content" tabindex="1">
+          <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+
+    <h1 class="post-title p-name" itemprop="name headline">为什么使用rebase而不是merge进行分支合并</h1>
+    <p class="post-meta"><!--      <time class="dt-published" datetime="" itemprop="datePublished">-->
+<!--        -->
+<!--      </time>--></p>
+
+  </header>
+
+  <div class="post-content e-content doc" itemprop="articleBody">
+    <div class="sect2">
+<h3 id="为什么使用rebase而不是merge进行分支合并"><a class="anchor" href="#为什么使用rebase而不是merge进行分支合并"></a>1. 为什么使用rebase而不是merge进行分支合并</h3>
+<div class="sect3">
+<h4 id="场景和问题"><a class="anchor" href="#场景和问题"></a>1.1. 场景和问题</h4>
+<div class="paragraph">
+<p>当前应用开发中，git可谓是不可或缺的一个版本管理工具。
+这次我们要介绍的两个命令是merge和rebase，这两个命令都可以合并commit，那么他们有什么区别呢，日常使用中，应该如何选择？有什么注意事项呢?</p>
+</div>
+<div class="paragraph">
+<p>一图胜千言，使用merge,你得到的git提交历史是这样的</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../../images/image-20210902162513737.png" alt="image"></span></p>
+</div>
+<div class="paragraph">
+<p>使用rebase，git历史是这样的</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../../images/image-20210902162632656.png" alt="image"></span></p>
+</div>
+<div class="paragraph">
+<p>另外，我们开发一个feature，不太可能所有的代码都开发完，只提交一个commit，通常我们是这么开发的</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../../images/image-20210902163653913.png" alt="image"></span></p>
+</div>
+<div class="paragraph">
+<p>我们希望该分支在merge到master前，压缩成一个commit，这个时候，需要用rebase。</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="实战"><a class="anchor" href="#实战"></a>1.2. 实战</h4>
+<div class="sect4">
+<h5 id="1-使用git-rebase进行合并"><a class="anchor" href="#1-使用git-rebase进行合并"></a>1. 使用git rebase进行合并</h5>
+<div class="paragraph">
+<p>接下来，我们从实战出发，看下如何使用rebase完成一次feature的合并。</p>
+</div>
+<div class="paragraph">
+<p>如下图，有两个分支，master和feature-1</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../../images/image-20210902165739577.png" alt="image"></span></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>第一步 首先压缩成一个commit</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>git rebase -i [commit-id] 这里填init对应的commit id或者HEAD~3，表示当前节点往前推3个节点</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../../images/image-20210902173539949.png" alt="image-20210902173539949"></span></p>
+</div>
+<div class="paragraph">
+<p>根据这里的提示，可以选择是否修改提交信息，将pick替换成如下</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../../images/image-20210902174514933.png" alt="image-20210902174514933"></span></p>
+</div>
+<div class="paragraph">
+<p>保存，然后就合并完毕了</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../../images/image-20210902174650587.png" alt="image-20210902174514933"></span></p>
+</div>
+<div class="paragraph">
+<p>&gt; git reset也可以实现压缩commit，但是却无法利用之前的commit message，并且方式有些风险且过于hack，因此本文不再展开。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>第二步 再使用rebase merge到master</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>git rebase master</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../../images/image-20210902174949529.png" alt="image-20210902174514933"></span></p>
+</div>
+<div class="paragraph">
+<p>在实际的使用中，绝大多数情况可以忽略第一步，直接执行第二步，如果没有冲突，或者冲突比较好解决，我们可以很快速的合并，当遇到复杂的冲突问题时，可以分成这两步去做。</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="2-对比使用git-merge进行合并"><a class="anchor" href="#2-对比使用git-merge进行合并"></a>2. 对比使用git merge进行合并</h5>
+<div class="paragraph">
+<p><span class="image"><img src="../../images/image-20210902180435125.png" alt="image-20210902174514933"></span></p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="注意事项"><a class="anchor" href="#注意事项"></a>1.3. 注意事项</h4>
+<div class="paragraph">
+<p>永远不要将公共分支rebase到私有的分支上。
+私有分支rebase后,推送远程可能需要force</p>
+</div>
+<div class="paragraph">
+<p>关于rebase和merge更深入的文章，可以参考</p>
+</div>
+<div class="paragraph">
+<p><a href="https://www.atlassian.com/git/tutorials/merging-vs-rebasing" class="bare">www.atlassian.com/git/tutorials/merging-vs-rebasing</a></p>
+</div>
+</div>
+</div>
+  </div>
+
+  <footer class="post-footer">
+    <nav class="post-pagination" role="navigation">
+      
+        <a class="post-previous" href="/blogs/springboot/spring-boot-redis.html">
+          <h4 class="post-pagination-label">Prev</h4>
+          <i class="fas fa-arrow-left"></i>
+          <span class="post-pagination-title">
+            Spring Boot集成Redis
+
+          </span>
+        </a>
+      
+
+      
+        <a class="post-next" href="/blogs/tools/rabbitmq-delay-queue/rabbit-based-delay-queue.html">
+          <h4 class="post-pagination-label">Next</h4>
+          <span class="post-pagination-title">
+            基于RabbitMQ的延迟队列服务
+
+          </span>
+          <i class="fas fa-arrow-right"></i>
+        </a>
+      
+    </nav>
+  </footer>
+
+  
+  
+</article>
+
+          <footer class="site-footer">
+            <div class="footer-col-wrapper">
+
+  <div class="footer-col">
+    <div class="copyright">
+      
+      
+      
+      
+      <p>Copyright ©  老司机; All rights reserved.</p>
+      
+    </div>
+    <p>
+      Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/ngzhio/jekyll-theme-hamilton">Hamilton</a>
+    </p>
+  </div>
+
+  <div class="footer-col">
+    <p>一个帮助开发人员探索java生态，并成为优秀工程师的网站</p>
+  </div>
+  <a href="https://beian.miit.gov.cn/" target="_blank">京ICP备2022003804号-1</a>
+</div>
+
+          </footer>
+        </main>
+        <div class="site-toc">
+          <div id="toc" class="fixed-toc"><ul class="sectlevel2">
+<li><a href="#为什么使用rebase而不是merge进行分支合并">1. 为什么使用rebase而不是merge进行分支合并</a>
+<ul class="sectlevel3">
+<li><a href="#场景和问题">1.1. 场景和问题</a></li>
+<li><a href="#实战">1.2. 实战</a>
+<ul class="sectlevel4">
+<li><a href="#1-使用git-rebase进行合并">1. 使用git rebase进行合并</a></li>
+<li><a href="#2-对比使用git-merge进行合并">2. 对比使用git merge进行合并</a></li>
+</ul>
+</li>
+<li><a href="#注意事项">1.3. 注意事项</a></li>
+</ul>
+</li>
+</ul></div>
+        </div>
+      </div>
+    </div>
+  </body>
+
+</html>

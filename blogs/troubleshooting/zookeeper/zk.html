@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<!--minimum-scale=1保证在chrome浏览器中调试响应窗口时，拥有fixed position的block不会跟随scroll变化-->
+<meta name="viewport" content="width=device-width, initial-scale=1 minimum-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>zookeeper内存泄漏问题修复与源码分析 | 老司机</title>
+<meta name="generator" content="Jekyll v3.9.3" />
+<meta property="og:title" content="zookeeper内存泄漏问题修复与源码分析" />
+<meta name="author" content="老司机" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="一个帮助开发人员探索java生态，并成为优秀工程师的网站" />
+<meta property="og:description" content="一个帮助开发人员探索java生态，并成为优秀工程师的网站" />
+<link rel="canonical" href="https://www.libinglong.tech/blogs/troubleshooting/zookeeper/zk.html" />
+<meta property="og:url" content="https://www.libinglong.tech/blogs/troubleshooting/zookeeper/zk.html" />
+<meta property="og:site_name" content="老司机" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2023-07-17T09:53:59-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="zookeeper内存泄漏问题修复与源码分析" />
+<meta name="twitter:site" content="@ngzhio" />
+<meta name="twitter:creator" content="@老司机" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"老司机"},"dateModified":"2023-07-17T09:53:59-05:00","datePublished":"2023-07-17T09:53:59-05:00","description":"一个帮助开发人员探索java生态，并成为优秀工程师的网站","headline":"zookeeper内存泄漏问题修复与源码分析","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.libinglong.tech/blogs/troubleshooting/zookeeper/zk.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://www.libinglong.tech/logo.png"},"name":"老司机"},"url":"https://www.libinglong.tech/blogs/troubleshooting/zookeeper/zk.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+<link type="application/atom+xml" rel="alternate" href="https://www.libinglong.tech/feed.xml" title="老司机" />
+
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CZ6MM7XT4X"></script>
+<script>
+  window['ga-disable-G-CZ6MM7XT4X'] = window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1";
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-CZ6MM7XT4X');
+</script>
+
+
+
+
+
+
+<script async src="/assets/js/site.js"></script>
+<script async src="/assets/js/setup.js"></script>
+
+<!-- Google Fonts -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open%20Sans|Roboto|Roboto%20Slab|Inconsolata|Dancing%20Script|Noto%20Sans%20SC|Noto%20Sans%20TC|Noto%20Serif%20SC|Noto%20Serif%20TC|Ma%20Shan%20Zheng">
+
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="/assets/css/skin.css">
+
+<!-- Begin selecting skin -->
+
+<!-- End selecting skin -->
+
+
+
+
+
+  </head>
+
+  <body>
+    <header class="header-container">
+      <div class="site-header">
+  <script>
+    function clickSidebarButton() {
+      const elem = document.getElementById("site-sidebar")
+      if (elem.style.display === "none" || elem.style.display === "") {
+        elem.style.display = "block";
+      } else {
+        elem.style.display = "none";
+      }
+    }
+  </script>
+  <a class="site-sidebar-button" onclick="clickSidebarButton()"><i class="far fa-user"></i>
+  </a>
+  <div class="site-title">
+    <a  rel="author" href="/">老司机</a>
+  </div>
+
+  
+  <nav class="site-nav">
+    <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+    <label for="nav-trigger" title="nav-trigger">
+        <span class="menu-icon">
+          <svg viewBox="0 0 18 15" width="18px" height="15px">
+            <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+          </svg>
+        </span>
+    </label>
+
+    <ul class="trigger">
+      <li><a class="" href="/java">Java</a></li>
+      
+      <li><a class="" href="/spring-boot">SpringBoot</a></li>
+      
+      <li><a class="" href="/spring-cloud">SpringCloud</a></li>
+      
+      <li><a class="" href="/blogs">博客</a></li>
+      
+      <li><a class="" href="/about">关于</a></li>
+      </ul>
+  </nav>
+  
+</div>
+
+    </header>
+    <div id="tocbar" style="display: none">
+      <button id="toggle-toc"></button>
+    </div>
+    <div class="site-container">
+      <div class="site-body">
+        <aside class="site-sidebar" id="site-sidebar">
+          <div class="fixed-sidebar">
+            
+            <div class="sidebar-section"><img src="/logo.png" class="author-avatar u-photo align-center" alt="老司机">
+  </div>
+
+<div class="sidebar-section">
+  <ul class="contact-list">
+    <li>
+        <i class="sidebar-icon fas fa-envelope"></i>
+        <a class="contact-info u-email" href="mailto:libinglong9@gmail.com">libinglong9@gmail.com</a>
+      </li>
+    
+  </ul>
+</div>
+
+<div class="sidebar-section feed-subscribe">
+  <a href="/feed.xml">
+    <i class="sidebar-icon fas fa-rss"></i><span>Subscribe</span>
+  </a>
+</div>
+
+<div class="sidebar-section">
+    <ul class="social-icons">
+      <li>
+          <a class="social-icon" href="https://v.douyin.com/LGmntoC"><i class="fab fa-tiktok fa-2x" title="Douyin"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://github.com/libinglong"><i class="fab fa-github fa-2x" title="GitHub"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://www.youtube.com/channel/UCXCxWAxBOO_-b0Kot-04LLQ"><i class="fab fa-youtube fa-2x" title="Youtube"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://t.me/laosiji_spring"><i class="fab fa-telegram fa-2x" title="Telegram"></i></a>
+        </li>
+    </ul>
+  </div>
+<a class="qq-link" target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=gZ9BYnnw9Ud7u3wjUq18A7EcIzTbVFVh&jump_from=webapi"><img border="0" src="//pub.idqqimg.com/wpa/images/group.png" alt="老司机" title="老司机"></a>
+<div>
+  <img src="/assets/img/weixin.jpg"/>
+  <span class="text-center">微信</span>
+</div>
+
+            
+          </div>
+        </aside>
+        <main class="site-main" id="content" aria-label="Content" tabindex="1">
+          <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+
+    <h1 class="post-title p-name" itemprop="name headline">zookeeper内存泄漏问题修复与源码分析</h1>
+    <p class="post-meta"><!--      <time class="dt-published" datetime="" itemprop="datePublished">-->
+<!--        -->
+<!--      </time>--></p>
+
+  </header>
+
+  <div class="post-content e-content doc" itemprop="articleBody">
+    <div class="sect1">
+<h2 id="问题"><a class="anchor" href="#问题"></a>1. 问题</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>近期测试环境的zookeeper出现了out of memory异常。种种迹象表明是l-schedule（基于阿里lts）导致。</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="images/image-20210819195237784.png" alt="image-20210819195237784"></span></p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="images/image-20210819195403196.png" alt="image-20210819195403196"></span></p>
+</div>
+<div class="paragraph">
+<p>由于线上依赖zookeeper的服务非常多，因此需要尽快定位引发zookeeper oom的问题，以免最终在线上导致同样的问题。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="先说结论"><a class="anchor" href="#先说结论"></a>2. 先说结论</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Admin系统触发了zookeeper的bug，触发条件如下</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="images/image-1.png" alt="image-1.png"></span></p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>重试次数非常大</p>
+</li>
+<li>
+<p>开启监听</p>
+</li>
+<li>
+<p>获取数据时，数据包大小超过了jute.maxbuffer,默认值4m</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>zookeeper在3.6.0修复了此bug，pr：https://github.com/apache/zookeeper/pull/590</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="images/image-2.png" alt="image-1.png"></span></p>
+</div>
+<div class="paragraph">
+<p>这里说下内存泄露主要原理：</p>
+</div>
+<div class="paragraph">
+<p>客户端使用长连接开启监听，同时该长连接也会用于其他的读写操作。在代码3处，客户端读取的数据包太大，引发io异常，并关闭了连接。客户端关闭连接后，zookeeper在添加watch的时候，没有检测该连接是否有效，将已经无效的连接添加，并且后续没有移除无效连接的操作，造成永久的引用，该连接自然会进入到老年代，且无法被回收，而该连接中引用了一个大于4m的数据。同时，客户端由于设置了非常大的重试次数，会继续新创建连接进行操作，但数据包大小是固定的，因此每次都会发生io异常并在此重试，导致持续的内存泄露，最终导致zookeeper oom而宕机。</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="排查过程"><a class="anchor" href="#排查过程"></a>3. 排查过程</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>在l-schedule的架构中，Admin，JobClient，JobTracker，TaskTracker，业务方Spring Boot自动装配SDK都会和zookeeper交互。如果是某一业务方使用SDK引起的问题，就会非常难以排查。</p>
+</div>
+<div class="paragraph">
+<p>先排查server端Admin，JobClient，JobTracker有没有问题。这几个服务恰好都部署在一个服务器</p>
+</div>
+<div class="paragraph">
+<p>经过一番排查，发现了一些蛛丝马迹</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>通过使用netstat -anlpt | grep 2181发现有一个进程频繁创建和销毁连接，通过pid定位到是admin服务</p>
+</li>
+<li>
+<p>admin服务的日志出现了如下情况，这是Curator-Framework抛出的异常，没有见到项目代码的异常</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="images/image-3.png" alt="image"></span></p>
+</div>
+<div class="paragraph">
+<p>日志显示，数据包超过了4m，是什么地方存储了这么大的数据呢？查看了一下代码，没有找到。</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>zk的watch数目明显上升</p>
+</li>
+<li>
+<p>查看zk oom后的内存快照</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>dominator retained heap排序</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="images/image-20210820122911199.png" alt="image-20210820122911199"></span></p>
+</div>
+<div class="paragraph">
+<p>或者histogram中查看retained heap排序，但是这个的计算很慢</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="images/image-20210820123038406.png" alt="image-20210820123038406"></span></p>
+</div>
+<div class="paragraph">
+<p>retained size排序是分析内存泄露的利器。</p>
+</div>
+<div class="paragraph">
+<p>查看代码，怀疑频繁创建连接是因为发生了上述异常导致连接关闭，而zk客户端重试次数设置为最大值，一直重试又会新建连接。由于一直重试，项目代码不会抛出异常。基于此思路，写了测试代码，果然如此。</p>
+</div>
+<div class="paragraph">
+<p>接下来的问题是，到底是什么项目代码导致了这种行为呢？可以将重试次数调小，重试结束后，自然就会抛出异常，但出于一些原因，没有这么做。考虑到重试次数非常大，项目代码运行的线程必然长时间卡在重试的位置，因此使用jstack dump下线程快照，就定位到了问题代码。代码显示，是在读取列表的时候，数据包过大了，这就破案了，项目代码往某个节点下增加子节点，是一个一个增加的，但获取子节点列表的时候，超过了4m。</p>
+</div>
+<div class="paragraph">
+<p>至此，客户端的问题就定位完毕。仔细想想，有点不对劲啊？客户端虽然出现异常，但通过netstat发现连接已经释放，可以认为客户端已经正确处理了该连接，为啥zk server端却oom了？因此这个问题本质上是zk的内存泄露问题。</p>
+</div>
+<div class="paragraph">
+<p>在本地复现问题后，通过尝试不同版本的zk，发现zk 3.6.0以及更高版本解决了问题。查阅release note，实在太多修复了，真的是没有找到哪个链接对应这个bug！因为zk也是用java写的，我就想通过debug的方式来确认下是哪部分代码出了问题。查看zk的启动脚本，在jvm参数中开启端口，然后就开始debug zk，功夫不负有心人，最终找到了出问题的代码，并且根据该部分代码找到git的提交记录，最终得到了修复的pr连接。</p>
+</div>
+<div class="paragraph">
+<p>这里说下debug zk的思路，根据内存快照，可以发现datetree的retained size很大，其内部引用与watch相关的代码都需要注意，NIOServerCnxn这个类就是watch的实现类，在内存快照中也很明显。开始我是以为zk没有正确的remove watch，但这将我带偏了，实际结果是add watch的时候，将无效的连接添加了。另外debug的时候，可以debug两个版本的zk做对比，我是对比的3.5.9和3.6.0。这是个侦探活，一定要仔细，耐心，个人认为没有什么捷径，一定要注意任何蛛丝马迹。</p>
+</div>
+</div>
+</div>
+  </div>
+
+  <footer class="post-footer">
+    <nav class="post-pagination" role="navigation">
+      
+        <a class="post-previous" href="/blogs/troubleshooting/strange-stress.html">
+          <h4 class="post-pagination-label">Prev</h4>
+          <i class="fas fa-arrow-left"></i>
+          <span class="post-pagination-title">
+            压测下的诡异现象
+
+          </span>
+        </a>
+      
+
+      
+        <a class="post-next" href="/blogs/unstateful-jenkins-in-k8s/jenkins-in-k8s.html">
+          <h4 class="post-pagination-label">Next</h4>
+          <span class="post-pagination-title">
+            在k8s中使用无状态的jenkins
+
+          </span>
+          <i class="fas fa-arrow-right"></i>
+        </a>
+      
+    </nav>
+  </footer>
+
+  
+  
+</article>
+
+          <footer class="site-footer">
+            <div class="footer-col-wrapper">
+
+  <div class="footer-col">
+    <div class="copyright">
+      
+      
+      
+      
+      <p>Copyright ©  老司机; All rights reserved.</p>
+      
+    </div>
+    <p>
+      Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/ngzhio/jekyll-theme-hamilton">Hamilton</a>
+    </p>
+  </div>
+
+  <div class="footer-col">
+    <p>一个帮助开发人员探索java生态，并成为优秀工程师的网站</p>
+  </div>
+  <a href="https://beian.miit.gov.cn/" target="_blank">京ICP备2022003804号-1</a>
+</div>
+
+          </footer>
+        </main>
+        <div class="site-toc">
+          <div id="toc" class="fixed-toc"><ul class="sectlevel1">
+<li><a href="#问题">1. 问题</a></li>
+<li><a href="#先说结论">2. 先说结论</a></li>
+<li><a href="#排查过程">3. 排查过程</a></li>
+</ul></div>
+        </div>
+      </div>
+    </div>
+  </body>
+
+</html>

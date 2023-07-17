@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<!--minimum-scale=1保证在chrome浏览器中调试响应窗口时，拥有fixed position的block不会跟随scroll变化-->
+<meta name="viewport" content="width=device-width, initial-scale=1 minimum-scale=1">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>java编码与docker locale的关系 | 老司机</title>
+<meta name="generator" content="Jekyll v3.9.3" />
+<meta property="og:title" content="java编码与docker locale的关系" />
+<meta name="author" content="老司机" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="一个帮助开发人员探索java生态，并成为优秀工程师的网站" />
+<meta property="og:description" content="一个帮助开发人员探索java生态，并成为优秀工程师的网站" />
+<link rel="canonical" href="https://www.libinglong.tech/blogs/docker/locale.html" />
+<meta property="og:url" content="https://www.libinglong.tech/blogs/docker/locale.html" />
+<meta property="og:site_name" content="老司机" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2023-07-17T09:53:59-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="java编码与docker locale的关系" />
+<meta name="twitter:site" content="@ngzhio" />
+<meta name="twitter:creator" content="@老司机" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"老司机"},"dateModified":"2023-07-17T09:53:59-05:00","datePublished":"2023-07-17T09:53:59-05:00","description":"一个帮助开发人员探索java生态，并成为优秀工程师的网站","headline":"java编码与docker locale的关系","mainEntityOfPage":{"@type":"WebPage","@id":"https://www.libinglong.tech/blogs/docker/locale.html"},"publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://www.libinglong.tech/logo.png"},"name":"老司机"},"url":"https://www.libinglong.tech/blogs/docker/locale.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+<link type="application/atom+xml" rel="alternate" href="https://www.libinglong.tech/feed.xml" title="老司机" />
+
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CZ6MM7XT4X"></script>
+<script>
+  window['ga-disable-G-CZ6MM7XT4X'] = window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1";
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-CZ6MM7XT4X');
+</script>
+
+
+
+
+
+
+<script async src="/assets/js/site.js"></script>
+<script async src="/assets/js/setup.js"></script>
+
+<!-- Google Fonts -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open%20Sans|Roboto|Roboto%20Slab|Inconsolata|Dancing%20Script|Noto%20Sans%20SC|Noto%20Sans%20TC|Noto%20Serif%20SC|Noto%20Serif%20TC|Ma%20Shan%20Zheng">
+
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="stylesheet" href="/assets/css/skin.css">
+
+<!-- Begin selecting skin -->
+
+<!-- End selecting skin -->
+
+
+
+
+
+  </head>
+
+  <body>
+    <header class="header-container">
+      <div class="site-header">
+  <script>
+    function clickSidebarButton() {
+      const elem = document.getElementById("site-sidebar")
+      if (elem.style.display === "none" || elem.style.display === "") {
+        elem.style.display = "block";
+      } else {
+        elem.style.display = "none";
+      }
+    }
+  </script>
+  <a class="site-sidebar-button" onclick="clickSidebarButton()"><i class="far fa-user"></i>
+  </a>
+  <div class="site-title">
+    <a  rel="author" href="/">老司机</a>
+  </div>
+
+  
+  <nav class="site-nav">
+    <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+    <label for="nav-trigger" title="nav-trigger">
+        <span class="menu-icon">
+          <svg viewBox="0 0 18 15" width="18px" height="15px">
+            <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+          </svg>
+        </span>
+    </label>
+
+    <ul class="trigger">
+      <li><a class="" href="/java">Java</a></li>
+      
+      <li><a class="" href="/spring-boot">SpringBoot</a></li>
+      
+      <li><a class="" href="/spring-cloud">SpringCloud</a></li>
+      
+      <li><a class="" href="/blogs">博客</a></li>
+      
+      <li><a class="" href="/about">关于</a></li>
+      </ul>
+  </nav>
+  
+</div>
+
+    </header>
+    <div id="tocbar" style="display: none">
+      <button id="toggle-toc"></button>
+    </div>
+    <div class="site-container">
+      <div class="site-body">
+        <aside class="site-sidebar" id="site-sidebar">
+          <div class="fixed-sidebar">
+            
+            <div class="sidebar-section"><img src="/logo.png" class="author-avatar u-photo align-center" alt="老司机">
+  </div>
+
+<div class="sidebar-section">
+  <ul class="contact-list">
+    <li>
+        <i class="sidebar-icon fas fa-envelope"></i>
+        <a class="contact-info u-email" href="mailto:libinglong9@gmail.com">libinglong9@gmail.com</a>
+      </li>
+    
+  </ul>
+</div>
+
+<div class="sidebar-section feed-subscribe">
+  <a href="/feed.xml">
+    <i class="sidebar-icon fas fa-rss"></i><span>Subscribe</span>
+  </a>
+</div>
+
+<div class="sidebar-section">
+    <ul class="social-icons">
+      <li>
+          <a class="social-icon" href="https://v.douyin.com/LGmntoC"><i class="fab fa-tiktok fa-2x" title="Douyin"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://github.com/libinglong"><i class="fab fa-github fa-2x" title="GitHub"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://www.youtube.com/channel/UCXCxWAxBOO_-b0Kot-04LLQ"><i class="fab fa-youtube fa-2x" title="Youtube"></i></a>
+        </li><li>
+          <a class="social-icon" href="https://t.me/laosiji_spring"><i class="fab fa-telegram fa-2x" title="Telegram"></i></a>
+        </li>
+    </ul>
+  </div>
+<a class="qq-link" target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=gZ9BYnnw9Ud7u3wjUq18A7EcIzTbVFVh&jump_from=webapi"><img border="0" src="//pub.idqqimg.com/wpa/images/group.png" alt="老司机" title="老司机"></a>
+<div>
+  <img src="/assets/img/weixin.jpg"/>
+  <span class="text-center">微信</span>
+</div>
+
+            
+          </div>
+        </aside>
+        <main class="site-main" id="content" aria-label="Content" tabindex="1">
+          <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+
+    <h1 class="post-title p-name" itemprop="name headline">java编码与docker locale的关系</h1>
+    <p class="post-meta"><!--      <time class="dt-published" datetime="" itemprop="datePublished">-->
+<!--        -->
+<!--      </time>--></p>
+
+  </header>
+
+  <div class="post-content e-content doc" itemprop="articleBody">
+    <div class="sect1">
+<h2 id="java-locale"><a class="anchor" href="#java-locale"></a>1. java 默认locale与编码问题</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>java编码问题其实分为很多种，比如jvm默认locale设置，默认文件编码方式设置，日志编码设置，源文件编码设置，本文档持续更新所有的编码相关问题</p>
+</div>
+<div class="sect2">
+<h3 id="影响locale文件编码的jvm属性"><a class="anchor" href="#影响locale文件编码的jvm属性"></a>1.1. 影响locale，文件编码的jvm属性</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>user.language</p>
+</li>
+<li>
+<p>user.country</p>
+</li>
+<li>
+<p>user.variant</p>
+<div class="paragraph">
+<p>这个我们一般不关心</p>
+</div>
+</li>
+<li>
+<p>file.encoding</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>这几个属性，首先jvm会通过复杂的逻辑进行初始化，这部分c代码详见openjdk：System.c，java_props_md.c，java_props_macosx.c，该部分逻辑，在不同的平台会有不同，绝不是仅仅通过LANG，LC_ALL，LC_*，LANGUAGE环境变量决定的，由于逻辑较为复杂，而我的clion过期了，因此我也没有debug详细跟踪一下。</p>
+</div>
+<div class="paragraph">
+<p>如果不想受系统环境影响，或者不想探究其影响逻辑的话，可以直接在jvm参数中指定上述属性的值，从而在初始化逻辑中覆盖之前得到的值。这其实是最简单高效的方法。</p>
+</div>
+<div class="paragraph">
+<p>从这里我们需要认清一点，环境变量是否能够影响程序的locale，完全取决于程序本身有没有读取这几个变量，并按照该变量设置locale，在jvm的实现中，不只是考虑了这些变量的，还有和平台相关的代码。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="macos"><a class="anchor" href="#macos"></a>1.2. macos</h3>
+<div class="paragraph">
+<p>根据首选语言和地区，user.language=zh，user.country=CN，文件编码通过什么影响的我没有找到</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../images/image-20211217182748500.png" alt="image-20211217182748500"></span></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Debian/Ubuntu</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="debianubuntu"><a class="anchor" href="#debianubuntu"></a>1.3. Debian/Ubuntu</h3>
+<div class="paragraph">
+<p>Debian/Ubuntu容器环境下，如果在dockerfile中指定下述命令</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-dockerfile" data-lang="dockerfile">  # Debian 先安装locales
+  RUN apt-get update
+  RUN apt-get -y install locales
+
+
+  RUN sed -i '/zh_CN.UTF-8/s/^# //g' /etc/locale.gen &amp;&amp; \
+      locale-gen
+  ENV LC_ALL zh_CN.UTF-8</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>运行java应用测试，得到下述结果，上述命令确实可以完全影响到我们需要的几个属性，但要注意的是，zh_CN.UTF-8这个值必须是locale支持的，不然会得到意想不到的结果，可以查看/etc/locale.gen文件得到支持的值(这个文件中的值是否齐全我不清楚，也没有去搜索相关文档)。</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">System.out.println("user.language=" + System.getProperty("user.language"));
+System.out.println("user.country=" + System.getProperty("user.country"));
+System.out.println("file.encoding=" + System.getProperty("file.encoding"));
+System.out.println("default locale=" + Locale.getDefault());</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-text" data-lang="text">user.language=zh
+user.country=CN
+file.encoding=UTF-8
+default locale=zh_CN</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="centos7"><a class="anchor" href="#centos7"></a>1.4. Centos7</h3>
+<div class="paragraph">
+<p>Centos7容器环境下，则需要在dockerfile中指定下述命令</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-dockerfile" data-lang="dockerfile">RUN localedef -c -f EUC-TW -i zh_TW zh_TW.EUC-TW
+ENV LC_ALL zh_TW.EUC-TW</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-text" data-lang="text">user.language=zh
+user.country=TW
+file.encoding=EUC-TW
+default locale=zh_TW</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="网上流言"><a class="anchor" href="#网上流言"></a>1.5. 网上流言</h3>
+<div class="paragraph">
+<p>网上多数的流言大概理论如下(比如 <a href="https://jarirajari.wordpress.com/2020/11/23/how-to-set-locale-in-linux-for-jvm/">这篇博客</a>)，但实际上这些环境变量对jvm的影响是有限的，使用这些环境变量往往得不到预期的结果</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>If the JVM setting <code>user.language</code> is set, use it and look no further</p>
+</li>
+<li>
+<p>If user language is not set, scan the environment for <code>LC_ALL</code></p>
+</li>
+<li>
+<p>If <code>LC_ALL</code> does not exist, scan the environment for <code>LANG</code></p>
+</li>
+<li>
+<p>If <code>LANG</code> is not set, default to <code>en_US</code> locale</p>
+</li>
+</ol>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>以上述文章为例，其列举了环境变量的优先级，但这和java应用的实际运行情况显然是不匹配的。</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="容器内java编码问题排查方法"><a class="anchor" href="#容器内java编码问题排查方法"></a>1.6. 容器内java编码问题排查方法</h3>
+<div class="sect3">
+<h4 id="普通java应用"><a class="anchor" href="#普通java应用"></a>1.6.1. 普通java应用</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>对于运行时的java应用，下载arthas，查看系统属性，看看值是否符合预期，这是最根本的方式。</p>
+</li>
+<li>
+<p>查看环境变量，由于环境变量不可以完全反映出jvm的默认locale和编码，因此作为只能作为一个辅助查询的手段，如果环境变量没有问题，仍然要通过jvm系统属性排查</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="maven"><a class="anchor" href="#maven"></a>1.6.2. maven</h4>
+<div class="paragraph">
+<p>maven也是基于java的应用，因此在构建过程中如果出现编码问题，也可以通过这个方法来排查，当然maven本身的编码相关的选项也是要考虑的</p>
+</div>
+<div class="paragraph">
+<p>输入mvn -v</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-text" data-lang="text">% mvn -v
+Apache Maven 3.6.3 (cecedd343002696d0abb50b32b541b8a6ba2883f)
+Maven home: /Users/jack/software/apache-maven-3.6.3
+Java version: 1.8.0_301, vendor: Oracle Corporation, runtime: /Library/Java/JavaVirtualMachines/jdk1.8.0_301.jdk/Contents/Home/jre
+Default locale: zh_CN, platform encoding: UTF-8
+OS name: "mac os x", version: "10.15.7", arch: "x86_64", family: "mac"</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="默认locale的作用"><a class="anchor" href="#默认locale的作用"></a>1.7. 默认locale的作用</h3>
+<div class="paragraph">
+<p>默认locale只是系统提供的一种默认的语言地区和编码方式，编写的应用程序未必会使用，一般调用三方的类库，在不指定locale的情况下会用默认的locale，三方类库一般是遵循这种约定俗成的习惯的，但如果是自己开发的类库，就不一定了，因此即使我们指定了默认值，但最终使用的是不是默认值，还得看程序怎么写。</p>
+</div>
+</div>
+</div>
+</div>
+  </div>
+
+  <footer class="post-footer">
+    <nav class="post-pagination" role="navigation">
+      
+        <a class="post-previous" href="/blogs/code/cat.html">
+          <h4 class="post-pagination-label">Prev</h4>
+          <i class="fas fa-arrow-left"></i>
+          <span class="post-pagination-title">
+            cat自定义日志路径
+
+          </span>
+        </a>
+      
+
+      
+        <a class="post-next" href="/blogs/java/jdk-vmoption-practice.html">
+          <h4 class="post-pagination-label">Next</h4>
+          <span class="post-pagination-title">
+            JDK8u/11/17 JVM Options实践
+
+          </span>
+          <i class="fas fa-arrow-right"></i>
+        </a>
+      
+    </nav>
+  </footer>
+
+  
+  
+</article>
+
+          <footer class="site-footer">
+            <div class="footer-col-wrapper">
+
+  <div class="footer-col">
+    <div class="copyright">
+      
+      
+      
+      
+      <p>Copyright ©  老司机; All rights reserved.</p>
+      
+    </div>
+    <p>
+      Powered by <a href="https://jekyllrb.com/">Jekyll</a> & <a href="https://github.com/ngzhio/jekyll-theme-hamilton">Hamilton</a>
+    </p>
+  </div>
+
+  <div class="footer-col">
+    <p>一个帮助开发人员探索java生态，并成为优秀工程师的网站</p>
+  </div>
+  <a href="https://beian.miit.gov.cn/" target="_blank">京ICP备2022003804号-1</a>
+</div>
+
+          </footer>
+        </main>
+        <div class="site-toc">
+          <div id="toc" class="fixed-toc"><ul class="sectlevel1">
+<li><a href="#java-locale">1. java 默认locale与编码问题</a>
+<ul class="sectlevel2">
+<li><a href="#影响locale文件编码的jvm属性">1.1. 影响locale，文件编码的jvm属性</a></li>
+<li><a href="#macos">1.2. macos</a></li>
+<li><a href="#debianubuntu">1.3. Debian/Ubuntu</a></li>
+<li><a href="#centos7">1.4. Centos7</a></li>
+<li><a href="#网上流言">1.5. 网上流言</a></li>
+<li><a href="#容器内java编码问题排查方法">1.6. 容器内java编码问题排查方法</a>
+<ul class="sectlevel3">
+<li><a href="#普通java应用">1.6.1. 普通java应用</a></li>
+<li><a href="#maven">1.6.2. maven</a></li>
+</ul>
+</li>
+<li><a href="#默认locale的作用">1.7. 默认locale的作用</a></li>
+</ul>
+</li>
+</ul></div>
+        </div>
+      </div>
+    </div>
+  </body>
+
+</html>
