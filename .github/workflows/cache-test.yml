@@ -24,8 +24,8 @@ jobs:
     
     - name: test cache content
       run: |
+        pwd
         whoami
-        rm -rf /usr/bin/cat
         which cat
         cat /tmp/abc || true
         cat /tmp/def || true
