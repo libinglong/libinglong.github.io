@@ -24,6 +24,7 @@ jobs:
     
     - name: test cache content
       run: |
+        which cat
         cat /tmp/abc || true
         cat /tmp/def || true
         echo hello >/tmp/abc
